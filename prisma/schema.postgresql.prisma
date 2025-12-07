@@ -1,0 +1,141 @@
+// PostgreSQL schema for production deployment
+// To use this schema:
+// 1. Copy this file to schema.prisma (backup the original first)
+// 2. Update DATABASE_URL in .env to your PostgreSQL connection string
+// 3. Run: npx prisma migrate dev --name init
+// 4. Run: npm run seed
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  slug      String      @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  menuItems MenuItem[]
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  featuredDishes FeaturedDish[]
+}
+
+model SiteSettings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContentBlock {
+  id          String   @id @default(cuid())
+  page        String   // "home", "about", "contact"
+  section     String   // "hero", "about-intro", "contact-info", etc.
+  content     String   // JSON or text content
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([page, section])
+}
+
+model HomeSlider {
+  id          String   @id @default(cuid())
+  imageUrl    String
+  caption     String?
+  altText     String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  text        String
+  bgColor     String   @default("#8B0000")
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FeaturedDish {
+  id          String   @id @default(cuid())
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StoreHours {
+  id          String   @id @default(cuid())
+  dayOfWeek   Int      @unique // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  openTime    String?  // Format: "HH:mm" (e.g., "11:00")
+  closeTime   String?  // Format: "HH:mm" (e.g., "22:00")
+  isClosed    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Holiday {
+  id          String   @id @default(cuid())
+  date        DateTime // Date of the holiday
+  title       String
+  description String?
+  isClosed     Boolean  @default(true)
+  overrideOpenTime  String?  // If open with special hours
+  overrideCloseTime String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StoreSettings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id               String    @id @default(cuid())
+  reviewerName     String
+  reviewerImageUrl String?
+  rating           Int
+  text             String
+  isVisible        Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+

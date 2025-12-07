@@ -1,0 +1,49 @@
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const page = searchParams.get("page");
+
+  const session = await auth();
+  if (!session?.user || (session.user as any).role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const where = page ? { page } : {};
+  const blocks = await prisma.contentBlock.findMany({
+    where,
+    orderBy: { order: "asc" }
+  });
+  return NextResponse.json(blocks);
+}
+
+export async function POST(req: Request) {
+  const session = await auth();
+  if (!session?.user || (session.user as any).role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const { page, section, content, order } = body;
+
+  if (!page || !section) {
+    return NextResponse.json(
+      { error: "Page and section are required" },
+      { status: 400 }
+    );
+  }
+
+  const block = await prisma.contentBlock.create({
+    data: {
+      page,
+      section,
+      content: content || "",
+      order: order || 0
+    }
+  });
+
+  return NextResponse.json(block);
+}
+
