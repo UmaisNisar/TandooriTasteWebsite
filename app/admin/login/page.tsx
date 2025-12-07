@@ -2,9 +2,9 @@
 
 import { signIn } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin";
@@ -148,6 +148,27 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="section-padding">
+        <div className="container-section max-w-md">
+          <div className="card-surface p-6 sm:p-8">
+            <h1 className="font-heading text-2xl text-gold mb-4">
+              Admin Sign In
+            </h1>
+            <p className="text-sm text-gray-300 mb-6">
+              Loading...
+            </p>
+          </div>
+        </div>
+      </div>
+    }>
+      <AdminLoginForm />
+    </Suspense>
   );
 }
 
