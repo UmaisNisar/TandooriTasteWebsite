@@ -1,8 +1,8 @@
-import { query } from './db';
 import { randomUUID } from 'crypto';
+import { query } from './db';
 
 // Re-export query for direct use
-export { query } from './db';
+export { query };
 
 // Helper function to generate CUID-like IDs (using crypto.randomUUID)
 export function generateId(): string {
