@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { categoryQueries, menuItemQueries, query } from "@/lib/db-helpers";
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET() {
   try {

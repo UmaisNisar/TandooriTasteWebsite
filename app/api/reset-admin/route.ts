@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { userQueries } from '@/lib/db-helpers';
 import bcrypt from 'bcryptjs';
 
+export const runtime = 'nodejs';
+
 export async function POST() {
   try {
     // Delete existing admin user if exists

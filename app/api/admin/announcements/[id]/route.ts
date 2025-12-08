@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { announcementQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
+export const runtime = 'nodejs';
+
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } }

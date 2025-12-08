@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { categoryQueries, menuItemQueries } from "@/lib/db-helpers";
 import { auth } from "@/lib/auth";
 
+export const runtime = 'nodejs';
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }

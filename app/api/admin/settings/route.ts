@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { siteSettingsQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   const session = await auth();
   if (!session?.user || (session.user as any).role !== "ADMIN") {

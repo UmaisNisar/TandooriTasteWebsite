@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { userQueries } from '@/lib/db-helpers';
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     // Check if any users exist

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { contentBlockQueries, storeHoursQueries, reviewQueries, userQueries } from '@/lib/db-helpers';
 import bcrypt from 'bcryptjs';
 
+export const runtime = 'nodejs';
+
 // Helper function to ensure ContentBlock exists
 async function ensureContentBlock(page: string, section: string, data: any) {
   const existing = await contentBlockQueries.findFirst({ page, section });

@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { contentBlockQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
+export const runtime = 'nodejs';
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const page = searchParams.get("page");

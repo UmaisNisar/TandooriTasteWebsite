@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { userQueries } from '@/lib/db-helpers';
 import bcrypt from 'bcryptjs';
 
+export const runtime = 'nodejs';
+
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();

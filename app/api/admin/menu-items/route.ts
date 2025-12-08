@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { menuItemQueries } from "@/lib/db-helpers";
 import { auth } from "@/lib/auth";
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   const items = await menuItemQueries.findMany(undefined, true);
   return NextResponse.json(items);

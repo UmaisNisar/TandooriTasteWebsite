@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { featuredDishQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
+export const runtime = 'nodejs';
+
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
