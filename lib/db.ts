@@ -41,9 +41,11 @@ function createPool() {
   });
 
   // Add error handler to pool
-  pool.on('error', (err) => {
+  pool.on('error', (err: any) => {
     console.error('[DB] Unexpected error on idle client:', err.message);
-    console.error('[DB] Error code:', err.code);
+    if (err.code) {
+      console.error('[DB] Error code:', err.code);
+    }
   });
 
   // Test connection on pool creation
