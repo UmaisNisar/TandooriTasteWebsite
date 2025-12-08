@@ -182,20 +182,23 @@ export async function GET() {
       }
     }
 
-    // Seed initial admin user (only if no users exist)
-    const anyUser = await prisma.user.findFirst();
-    if (!anyUser) {
-      const hashedPassword = await bcrypt.hash("admin123", 10);
-      
-      await prisma.user.create({
-        data: {
-          email: "admin",
-          password: hashedPassword,
-          name: "Admin User",
-          role: "ADMIN"
-        }
-      });
-    }
+    // Seed initial admin user - delete existing and create fresh
+    await prisma.user.deleteMany({
+      where: {
+        email: "admin"
+      }
+    });
+
+    const hashedPassword = await bcrypt.hash("admin123", 10);
+    
+    await prisma.user.create({
+      data: {
+        email: "admin",
+        password: hashedPassword,
+        name: "Admin User",
+        role: "ADMIN"
+      }
+    });
 
     await prisma.$disconnect();
 
