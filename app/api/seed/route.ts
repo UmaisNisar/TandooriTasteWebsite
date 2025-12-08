@@ -144,21 +144,21 @@ export async function GET() {
     const reviews = [
       {
         reviewerName: "Ayesha K.",
-        reviewerImageUrl: null,
+        reviewerImageUrl: undefined,
         rating: 5,
         text: "Reminds me of home. The karahi and naan are exactly like the dhabas in Pakistan.",
         isVisible: true
       },
       {
         reviewerName: "Michael R.",
-        reviewerImageUrl: null,
+        reviewerImageUrl: undefined,
         rating: 5,
         text: "The tandoori platter is unreal. Perfect for sharing and always cooked to perfection.",
         isVisible: true
       },
       {
         reviewerName: "Sarah & Tom",
-        reviewerImageUrl: null,
+        reviewerImageUrl: undefined,
         rating: 5,
         text: "They catered our small wedding and every guest still talks about the biryani.",
         isVisible: true
