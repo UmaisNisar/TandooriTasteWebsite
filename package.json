@@ -4,12 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma db push --accept-data-loss && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "seed": "npx prisma db seed",
     "postinstall": "prisma generate",
-    "generate-env": "node scripts/generate-env.js"
+    "generate-env": "node scripts/generate-env.js",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
