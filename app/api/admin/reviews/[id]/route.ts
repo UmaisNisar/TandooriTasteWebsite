@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { reviewQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function PUT(
@@ -35,10 +35,7 @@ export async function PUT(
     );
   }
 
-  const review = await prisma.review.update({
-    where: { id: params.id },
-    data: updateData
-  });
+  const review = await reviewQueries.update(params.id, updateData);
 
   return NextResponse.json(review);
 }
@@ -52,9 +49,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.review.delete({
-    where: { id: params.id }
-  });
+  await reviewQueries.delete(params.id);
 
   return NextResponse.json({ success: true });
 }

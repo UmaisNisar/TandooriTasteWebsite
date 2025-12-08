@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { categoryQueries } from "@/lib/db-helpers";
 import { auth } from "@/lib/auth";
 
 export async function GET() {
-  const categories = await prisma.category.findMany({
-    orderBy: { name: "asc" }
-  });
+  const categories = await categoryQueries.findMany();
   return NextResponse.json(categories);
 }
 
@@ -30,9 +28,7 @@ export async function POST(request: Request) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  const category = await prisma.category.create({
-    data: { name, slug }
-  });
+  const category = await categoryQueries.create({ name, slug });
 
   return NextResponse.json(category, { status: 201 });
 }

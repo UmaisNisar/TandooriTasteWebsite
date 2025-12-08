@@ -1,9 +1,9 @@
-import { prisma } from "@/lib/prisma";
+import { menuItemQueries, categoryQueries } from "@/lib/db-helpers";
 
 export default async function AdminDashboardPage() {
   const [itemCount, categoryCount] = await Promise.all([
-    prisma.menuItem.count(),
-    prisma.category.count()
+    menuItemQueries.count(),
+    categoryQueries.count()
   ]);
 
   return (

@@ -1,18 +1,11 @@
-import { prisma } from "@/lib/prisma";
+import { featuredDishQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const featured = await prisma.featuredDish.findMany({
-      include: {
-        menuItem: {
-          include: { category: true }
-        }
-      },
-      orderBy: { order: "asc" }
-    });
+    const featured = await featuredDishQueries.findMany();
     return NextResponse.json(featured);
   } catch (error) {
     console.error('Error fetching featured dishes:', error);

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { contentBlockQueries, storeHoursQueries } from "@/lib/db-helpers";
 import DeliveryLinks from "./DeliveryLinks";
 
 export default async function ContactSection() {
@@ -7,13 +7,8 @@ export default async function ContactSection() {
   
   try {
     [blocks, storeData] = await Promise.all([
-      prisma.contentBlock.findMany({
-        where: { page: "contact" },
-        orderBy: { order: "asc" }
-      }),
-      prisma.storeHours.findMany({
-        orderBy: { dayOfWeek: "asc" }
-      })
+      contentBlockQueries.findMany({ page: "contact" }),
+      storeHoursQueries.findMany()
     ]);
   } catch (error) {
     console.error('Database error on contact page:', error);

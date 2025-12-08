@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { announcementQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -8,9 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const announcements = await prisma.announcement.findMany({
-    orderBy: { createdAt: "desc" }
-  });
+  const announcements = await announcementQueries.findMany();
   return NextResponse.json(announcements);
 }
 
@@ -30,13 +28,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const announcement = await prisma.announcement.create({
-    data: {
-      text,
-      bgColor: bgColor || "#8B0000",
-      startDate: startDate ? new Date(startDate) : null,
-      endDate: endDate ? new Date(endDate) : null
-    }
+  const announcement = await announcementQueries.create({
+    text,
+    bgColor: bgColor || "#8B0000",
+    startDate: startDate ? new Date(startDate) : undefined,
+    endDate: endDate ? new Date(endDate) : undefined
   });
 
   return NextResponse.json(announcement);

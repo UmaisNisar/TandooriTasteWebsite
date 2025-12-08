@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { holidayQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -8,9 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const holidays = await prisma.holiday.findMany({
-    orderBy: { date: "asc" }
-  });
+  const holidays = await holidayQueries.findMany();
   return NextResponse.json(holidays);
 }
 
@@ -30,15 +28,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const holiday = await prisma.holiday.create({
-    data: {
-      date: new Date(date),
-      title,
-      description: description || null,
-      isClosed: isClosed !== undefined ? isClosed : true,
-      overrideOpenTime: overrideOpenTime || null,
-      overrideCloseTime: overrideCloseTime || null
-    }
+  const holiday = await holidayQueries.create({
+    date: new Date(date),
+    title,
+    description: description || undefined,
+    isClosed: isClosed !== undefined ? isClosed : true,
+    overrideOpenTime: overrideOpenTime || undefined,
+    overrideCloseTime: overrideCloseTime || undefined
   });
 
   return NextResponse.json(holiday);

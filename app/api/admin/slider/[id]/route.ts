@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { homeSliderQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function PUT(
@@ -14,16 +14,14 @@ export async function PUT(
   const body = await req.json();
   const { imageUrl, caption, altText, order, isActive } = body;
 
-  const slide = await prisma.homeSlider.update({
-    where: { id: params.id },
-    data: {
-      ...(imageUrl !== undefined && { imageUrl }),
-      ...(caption !== undefined && { caption }),
-      ...(altText !== undefined && { altText }),
-      ...(order !== undefined && { order }),
-      ...(isActive !== undefined && { isActive })
-    }
-  });
+  const updateData: any = {};
+  if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+  if (caption !== undefined) updateData.caption = caption;
+  if (altText !== undefined) updateData.altText = altText;
+  if (order !== undefined) updateData.order = order;
+  if (isActive !== undefined) updateData.isActive = isActive;
+
+  const slide = await homeSliderQueries.update(params.id, updateData);
 
   return NextResponse.json(slide);
 }
@@ -37,9 +35,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.homeSlider.delete({
-    where: { id: params.id }
-  });
+  await homeSliderQueries.delete(params.id);
 
   return NextResponse.json({ success: true });
 }

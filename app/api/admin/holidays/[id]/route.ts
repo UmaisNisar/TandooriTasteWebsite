@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { holidayQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function PUT(
@@ -14,17 +14,15 @@ export async function PUT(
   const body = await req.json();
   const { date, title, description, isClosed, overrideOpenTime, overrideCloseTime } = body;
 
-  const holiday = await prisma.holiday.update({
-    where: { id: params.id },
-    data: {
-      ...(date && { date: new Date(date) }),
-      ...(title !== undefined && { title }),
-      ...(description !== undefined && { description }),
-      ...(isClosed !== undefined && { isClosed }),
-      ...(overrideOpenTime !== undefined && { overrideOpenTime }),
-      ...(overrideCloseTime !== undefined && { overrideCloseTime })
-    }
-  });
+  const updateData: any = {};
+  if (date) updateData.date = new Date(date);
+  if (title !== undefined) updateData.title = title;
+  if (description !== undefined) updateData.description = description;
+  if (isClosed !== undefined) updateData.isClosed = isClosed;
+  if (overrideOpenTime !== undefined) updateData.overrideOpenTime = overrideOpenTime;
+  if (overrideCloseTime !== undefined) updateData.overrideCloseTime = overrideCloseTime;
+
+  const holiday = await holidayQueries.update(params.id, updateData);
 
   return NextResponse.json(holiday);
 }
@@ -38,9 +36,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.holiday.delete({
-    where: { id: params.id }
-  });
+  await holidayQueries.delete(params.id);
 
   return NextResponse.json({ success: true });
 }

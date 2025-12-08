@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { menuItemQueries } from "@/lib/db-helpers";
 import { auth } from "@/lib/auth";
 
 export async function GET() {
-  const items = await prisma.menuItem.findMany({
-    orderBy: { name: "asc" },
-    include: { category: true }
-  });
+  const items = await menuItemQueries.findMany(undefined, true);
   return NextResponse.json(items);
 }
 
@@ -27,14 +24,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const item = await prisma.menuItem.create({
-    data: {
-      name: String(name),
-      description: String(description),
-      price: Number(price),
-      categoryId: String(categoryId),
-      imageUrl: imageUrl ? String(imageUrl) : null
-    }
+  const item = await menuItemQueries.create({
+    name: String(name),
+    description: String(description),
+    price: Number(price),
+    categoryId: String(categoryId),
+    imageUrl: imageUrl ? String(imageUrl) : undefined
   });
 
   return NextResponse.json(item, { status: 201 });

@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { contentBlockQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function PUT(
@@ -14,13 +14,11 @@ export async function PUT(
   const body = await req.json();
   const { content, order } = body;
 
-  const block = await prisma.contentBlock.update({
-    where: { id: params.id },
-    data: {
-      ...(content !== undefined && { content }),
-      ...(order !== undefined && { order })
-    }
-  });
+  const updateData: any = {};
+  if (content !== undefined) updateData.content = content;
+  if (order !== undefined) updateData.order = order;
+
+  const block = await contentBlockQueries.update(params.id, updateData);
 
   return NextResponse.json(block);
 }
@@ -34,9 +32,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.contentBlock.delete({
-    where: { id: params.id }
-  });
+  await contentBlockQueries.delete(params.id);
 
   return NextResponse.json({ success: true });
 }

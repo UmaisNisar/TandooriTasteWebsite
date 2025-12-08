@@ -1,19 +1,16 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { userQueries } from '@/lib/db-helpers';
 import bcrypt from 'bcryptjs';
 
 export async function GET() {
   try {
     // Find the admin user
-    const adminUser = await prisma.user.findFirst({
-      where: {
-        email: 'admin',
-        role: 'ADMIN'
-      }
+    const adminUser = await userQueries.findFirst({
+      email: 'admin',
+      role: 'ADMIN'
     });
 
     if (!adminUser) {
-      await prisma.$disconnect();
       return NextResponse.json({
         error: 'Admin user not found'
       }, { status: 404 });
@@ -22,8 +19,6 @@ export async function GET() {
     // Test password comparison
     const testPassword = 'admin123';
     const passwordMatch = await bcrypt.compare(testPassword, adminUser.password);
-
-    await prisma.$disconnect();
 
     return NextResponse.json({
       userExists: true,
@@ -38,7 +33,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Test password error:', error);
-    await prisma.$disconnect();
     return NextResponse.json({
       error: String(error)
     }, { status: 500 });

@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { featuredDishQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -8,10 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const featured = await prisma.featuredDish.findMany({
-    include: { menuItem: true },
-    orderBy: { order: "asc" }
-  });
+  const featured = await featuredDishQueries.findMany(true);
   return NextResponse.json(featured);
 }
 
@@ -31,12 +28,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const featured = await prisma.featuredDish.create({
-    data: {
-      menuItemId,
-      order: order || 0
-    },
-    include: { menuItem: true }
+  const featured = await featuredDishQueries.create({
+    menuItemId,
+    order: order || 0
   });
 
   return NextResponse.json(featured);

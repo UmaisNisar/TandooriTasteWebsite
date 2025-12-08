@@ -1,22 +1,16 @@
-import { prisma } from "@/lib/prisma";
+import { storeHoursQueries, holidayQueries, query } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const hours = await prisma.storeHours.findMany({
-      orderBy: { dayOfWeek: "asc" }
-    });
+    const hours = await storeHoursQueries.findMany();
 
-    const holidays = await prisma.holiday.findMany({
-      where: {
-        date: {
-          gte: new Date()
-        }
-      },
-      orderBy: { date: "asc" }
-    });
+    const result = await query(
+      'SELECT * FROM "Holiday" WHERE date >= NOW() ORDER BY date ASC'
+    );
+    const holidays = result.rows;
 
     return NextResponse.json({ hours, holidays });
   } catch (error) {

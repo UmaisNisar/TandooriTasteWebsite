@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { storeSettingsQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const settings = await prisma.storeSettings.findMany();
+  const settings = await storeSettingsQueries.findMany();
   const settingsMap = Object.fromEntries(
     settings.map((s) => [s.key, s.value])
   );
@@ -28,10 +28,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Key is required" }, { status: 400 });
   }
 
-  await prisma.storeSettings.upsert({
-    where: { key },
-    update: { value: String(value || "") },
-    create: { key, value: String(value || "") }
+  await storeSettingsQueries.upsert({
+    key,
+    value: String(value || "")
   });
 
   return NextResponse.json({ success: true });

@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { featuredDishQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function DELETE(
@@ -11,9 +11,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.featuredDish.delete({
-    where: { id: params.id }
-  });
+  await featuredDishQueries.delete(params.id);
 
   return NextResponse.json({ success: true });
 }

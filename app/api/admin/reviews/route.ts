@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { reviewQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -8,9 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const reviews = await prisma.review.findMany({
-    orderBy: { createdAt: "desc" }
-  });
+  const reviews = await reviewQueries.findMany();
   return NextResponse.json(reviews);
 }
 
@@ -37,14 +35,12 @@ export async function POST(req: Request) {
     );
   }
 
-  const review = await prisma.review.create({
-    data: {
-      reviewerName,
-      reviewerImageUrl: reviewerImageUrl || null,
-      rating: parseInt(rating),
-      text,
-      isVisible: isVisible !== undefined ? isVisible : true
-    }
+  const review = await reviewQueries.create({
+    reviewerName,
+    reviewerImageUrl: reviewerImageUrl || undefined,
+    rating: parseInt(rating),
+    text,
+    isVisible: isVisible !== undefined ? isVisible : true
   });
 
   return NextResponse.json(review);

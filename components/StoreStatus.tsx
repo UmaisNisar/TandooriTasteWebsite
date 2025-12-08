@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { holidayQueries, storeHoursQueries } from "@/lib/db-helpers";
 
 export default async function StoreStatus() {
   try {
@@ -7,12 +7,10 @@ export default async function StoreStatus() {
     const dayOfWeek = now.getDay();
 
     // Check for holidays
-    const holiday = await prisma.holiday.findFirst({
-      where: {
-        date: {
-          gte: today,
-          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-        }
+    const holiday = await holidayQueries.findFirst({
+      dateRange: {
+        start: today,
+        end: new Date(today.getTime() + 24 * 60 * 60 * 1000)
       }
     });
 
@@ -54,9 +52,7 @@ export default async function StoreStatus() {
     }
 
     // Get regular hours
-    const hours = await prisma.storeHours.findUnique({
-      where: { dayOfWeek }
-    });
+    const hours = await storeHoursQueries.findUnique({ dayOfWeek });
 
     if (!hours || hours.isClosed || !hours.openTime || !hours.closeTime) {
       return (

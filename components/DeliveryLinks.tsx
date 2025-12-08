@@ -1,9 +1,9 @@
-import { prisma } from "@/lib/prisma";
+import { storeSettingsQueries } from "@/lib/db-helpers";
 import Link from "next/link";
 
 export default async function DeliveryLinks() {
   try {
-    const settings = await prisma.storeSettings.findMany();
+    const settings = await storeSettingsQueries.findMany();
     const settingsMap = Object.fromEntries(
       settings.map((s) => [s.key, s.value])
     );

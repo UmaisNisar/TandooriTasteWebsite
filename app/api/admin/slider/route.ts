@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { homeSliderQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -8,9 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const slides = await prisma.homeSlider.findMany({
-    orderBy: { order: "asc" }
-  });
+  const slides = await homeSliderQueries.findMany();
   return NextResponse.json(slides);
 }
 
@@ -30,13 +28,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const slide = await prisma.homeSlider.create({
-    data: {
-      imageUrl,
-      caption: caption || null,
-      altText: altText || null,
-      order: order || 0
-    }
+  const slide = await homeSliderQueries.create({
+    imageUrl,
+    caption: caption || undefined,
+    altText: altText || undefined,
+    order: order || 0
   });
 
   return NextResponse.json(slide);

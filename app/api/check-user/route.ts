@@ -1,20 +1,16 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { userQueries } from '@/lib/db-helpers';
 
 export async function GET() {
   try {
     // Check if any users exist
-    const users = await prisma.user.findMany();
+    const users = await userQueries.findMany();
     
     // Check specifically for admin user
-    const adminUser = await prisma.user.findFirst({
-      where: {
-        email: 'admin',
-        role: 'ADMIN'
-      }
+    const adminUser = await userQueries.findFirst({
+      email: 'admin',
+      role: 'ADMIN'
     });
-
-    await prisma.$disconnect();
 
     return NextResponse.json({
       totalUsers: users.length,
@@ -34,7 +30,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Check user error:', error);
-    await prisma.$disconnect();
     return NextResponse.json({
       error: String(error),
       message: 'Error checking users'

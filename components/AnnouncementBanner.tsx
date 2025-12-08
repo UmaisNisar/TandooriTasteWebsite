@@ -1,20 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { announcementQueries } from "@/lib/db-helpers";
 
 export default async function AnnouncementBanner() {
   try {
-    const now = new Date();
-    const announcements = await prisma.announcement.findMany({
-      where: {
-        isActive: true,
-        OR: [
-          { startDate: null, endDate: null },
-          { startDate: null, endDate: { gte: now } },
-          { startDate: { lte: now }, endDate: null },
-          { startDate: { lte: now }, endDate: { gte: now } }
-        ]
-      },
-      orderBy: { createdAt: "desc" },
-      take: 1
+    const announcements = await announcementQueries.findMany({
+      isActive: true,
+      dateFilter: true
     });
 
     if (announcements.length === 0) return null;

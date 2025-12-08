@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { menuItemQueries } from "@/lib/db-helpers";
 import { auth } from "@/lib/auth";
 
 export async function PUT(
@@ -14,16 +14,14 @@ export async function PUT(
   const body = await request.json();
   const { name, description, price, categoryId, imageUrl } = body;
 
-  const item = await prisma.menuItem.update({
-    where: { id: params.id },
-    data: {
-      name: name ? String(name) : undefined,
-      description: description ? String(description) : undefined,
-      price: price !== undefined ? Number(price) : undefined,
-      categoryId: categoryId ? String(categoryId) : undefined,
-      imageUrl: imageUrl !== undefined ? String(imageUrl) : undefined
-    }
-  });
+  const updateData: any = {};
+  if (name !== undefined) updateData.name = String(name);
+  if (description !== undefined) updateData.description = String(description);
+  if (price !== undefined) updateData.price = Number(price);
+  if (categoryId !== undefined) updateData.categoryId = String(categoryId);
+  if (imageUrl !== undefined) updateData.imageUrl = imageUrl ? String(imageUrl) : null;
+
+  const item = await menuItemQueries.update(params.id, updateData);
 
   return NextResponse.json(item);
 }
@@ -37,7 +35,7 @@ export async function DELETE(
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  await prisma.menuItem.delete({ where: { id: params.id } });
+  await menuItemQueries.delete(params.id);
   return new NextResponse(null, { status: 204 });
 }
 

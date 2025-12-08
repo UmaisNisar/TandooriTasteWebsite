@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { categoryQueries, menuItemQueries } from "@/lib/db-helpers";
 import { auth } from "@/lib/auth";
 
 export async function PUT(
@@ -26,10 +26,7 @@ export async function PUT(
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  const category = await prisma.category.update({
-    where: { id: params.id },
-    data: { name, slug }
-  });
+  const category = await categoryQueries.update(params.id, { name, slug });
 
   return NextResponse.json(category);
 }
@@ -43,9 +40,7 @@ export async function DELETE(
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  const count = await prisma.menuItem.count({
-    where: { categoryId: params.id }
-  });
+  const count = await menuItemQueries.count({ categoryId: params.id });
 
   if (count > 0) {
     return NextResponse.json(
@@ -54,7 +49,7 @@ export async function DELETE(
     );
   }
 
-  await prisma.category.delete({ where: { id: params.id } });
+  await categoryQueries.delete(params.id);
   return new NextResponse(null, { status: 204 });
 }
 

@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { readFileSync } from 'fs';
 import { join } from 'path';
-
-const execAsync = promisify(exec);
+import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,50 +9,52 @@ export async function GET() {
   try {
     console.log('[MIGRATE] Starting database migration...');
     
-    // Prisma client should already be generated during build (via postinstall script)
-    // Skip prisma generate - it causes issues in serverless environments
+    // Read and execute SQL schema
+    console.log('[MIGRATE] Reading schema file...');
+    const schemaPath = join(process.cwd(), 'sql', 'schema.sql');
+    const schemaSQL = readFileSync(schemaPath, 'utf-8');
     
-    // Run migrations only
-    console.log('[MIGRATE] Running migrations...');
+    // Split by semicolons and execute each statement
+    const statements = schemaSQL
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.startsWith('--'));
     
-    // Use Prisma binary directly from node_modules to avoid npx issues in serverless
-    const prismaPath = join(process.cwd(), 'node_modules', '.bin', 'prisma');
+    console.log(`[MIGRATE] Executing ${statements.length} SQL statements...`);
     
-    // Set proper environment for serverless
-    const env = {
-      ...process.env,
-      // Use temp directory for npm cache if needed
-      NPM_CONFIG_CACHE: process.env.NPM_CONFIG_CACHE || '/tmp/.npm',
-      HOME: process.env.HOME || '/tmp',
-    };
-    
-    // Run migrate deploy using Prisma binary directly
-    const command = process.platform === 'win32' 
-      ? `"${prismaPath}.cmd" migrate deploy`
-      : `"${prismaPath}" migrate deploy`;
-    
-    const { stdout, stderr } = await execAsync(command, {
-      env,
-      cwd: process.cwd(),
-      maxBuffer: 1024 * 1024 * 10, // 10MB buffer
-    });
-    
-    console.log('[MIGRATE] Migration output:', stdout);
-    if (stderr) {
-      console.warn('[MIGRATE] Migration warnings:', stderr);
+    const results = [];
+    for (const statement of statements) {
+      try {
+        await query(statement);
+        results.push({ statement: statement.substring(0, 50) + '...', success: true });
+      } catch (err: any) {
+        // Ignore "already exists" errors
+        if (err.message?.includes('already exists') || err.code === '42P07') {
+          results.push({ statement: statement.substring(0, 50) + '...', success: true, note: 'already exists' });
+        } else {
+          results.push({ statement: statement.substring(0, 50) + '...', success: false, error: err.message });
+        }
+      }
     }
+    
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+    
+    console.log(`[MIGRATE] Migration complete: ${successCount} succeeded, ${failCount} failed`);
     
     return NextResponse.json({
       success: true,
       message: 'Database migrations completed successfully!',
-      output: stdout
+      executed: successCount,
+      failed: failCount,
+      results
     });
   } catch (error: any) {
     console.error('[MIGRATE] Migration error:', error);
     return NextResponse.json({
       success: false,
       error: error.message,
-      output: error.stdout || error.stderr || String(error)
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 });
   }
 }

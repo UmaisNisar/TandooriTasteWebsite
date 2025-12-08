@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { storeHoursQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -8,9 +8,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const hours = await prisma.storeHours.findMany({
-    orderBy: { dayOfWeek: "asc" }
-  });
+  const hours = await storeHoursQueries.findMany();
   return NextResponse.json(hours);
 }
 
@@ -30,19 +28,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const hours = await prisma.storeHours.upsert({
-    where: { dayOfWeek },
-    update: {
-      openTime: isClosed ? null : openTime || null,
-      closeTime: isClosed ? null : closeTime || null,
-      isClosed: isClosed || false
-    },
-    create: {
-      dayOfWeek,
-      openTime: isClosed ? null : openTime || null,
-      closeTime: isClosed ? null : closeTime || null,
-      isClosed: isClosed || false
-    }
+  const hours = await storeHoursQueries.upsert({
+    dayOfWeek,
+    openTime: isClosed ? undefined : (openTime || undefined),
+    closeTime: isClosed ? undefined : (closeTime || undefined),
+    isClosed: isClosed || false
   });
 
   return NextResponse.json(hours);

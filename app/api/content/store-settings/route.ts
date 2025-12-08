@@ -1,11 +1,11 @@
-import { prisma } from "@/lib/prisma";
+import { storeSettingsQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const settings = await prisma.storeSettings.findMany();
+    const settings = await storeSettingsQueries.findMany();
     const settingsMap = Object.fromEntries(
       settings.map((s) => [s.key, s.value])
     );

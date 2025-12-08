@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { contentBlockQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
@@ -8,11 +8,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const page = searchParams.get("page");
 
-    const where = page ? { page } : {};
-    const blocks = await prisma.contentBlock.findMany({
-      where,
-      orderBy: { order: "asc" }
-    });
+    const blocks = await contentBlockQueries.findMany(page ? { page } : undefined);
 
     return NextResponse.json(blocks);
   } catch (error) {

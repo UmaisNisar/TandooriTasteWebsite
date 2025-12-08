@@ -1,28 +1,20 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { userQueries } from '@/lib/db-helpers';
 import bcrypt from 'bcryptjs';
 
 export async function POST() {
   try {
     // Delete existing admin user if exists
-    await prisma.user.deleteMany({
-      where: {
-        email: 'admin'
-      }
-    });
+    await userQueries.deleteMany({ email: 'admin' });
 
     // Create new admin user
     const hashedPassword = await bcrypt.hash('admin123', 10);
-    const user = await prisma.user.create({
-      data: {
-        email: 'admin',
-        password: hashedPassword,
-        name: 'Admin User',
-        role: 'ADMIN'
-      }
+    const user = await userQueries.create({
+      email: 'admin',
+      password: hashedPassword,
+      name: 'Admin User',
+      role: 'ADMIN'
     });
-
-    await prisma.$disconnect();
 
     return NextResponse.json({
       success: true,
@@ -40,7 +32,6 @@ export async function POST() {
     });
   } catch (error) {
     console.error('Reset admin error:', error);
-    await prisma.$disconnect();
     return NextResponse.json({
       error: String(error),
       message: 'Error resetting admin user'

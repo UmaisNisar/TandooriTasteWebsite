@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { announcementQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function PUT(
@@ -14,20 +14,14 @@ export async function PUT(
   const body = await req.json();
   const { text, bgColor, startDate, endDate, isActive } = body;
 
-  const announcement = await prisma.announcement.update({
-    where: { id: params.id },
-    data: {
-      ...(text !== undefined && { text }),
-      ...(bgColor !== undefined && { bgColor }),
-      ...(startDate !== undefined && {
-        startDate: startDate ? new Date(startDate) : null
-      }),
-      ...(endDate !== undefined && {
-        endDate: endDate ? new Date(endDate) : null
-      }),
-      ...(isActive !== undefined && { isActive })
-    }
-  });
+  const updateData: any = {};
+  if (text !== undefined) updateData.text = text;
+  if (bgColor !== undefined) updateData.bgColor = bgColor;
+  if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;
+  if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
+  if (isActive !== undefined) updateData.isActive = isActive;
+
+  const announcement = await announcementQueries.update(params.id, updateData);
 
   return NextResponse.json(announcement);
 }
@@ -41,9 +35,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await prisma.announcement.delete({
-    where: { id: params.id }
-  });
+  await announcementQueries.delete(params.id);
 
   return NextResponse.json({ success: true });
 }

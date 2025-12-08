@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { contentBlockQueries, featuredDishQueries } from "@/lib/db-helpers";
 import Image from "next/image";
 import Link from "next/link";
 import BestSellers from "@/components/BestSellers";
@@ -18,18 +18,8 @@ export default async function HomePage() {
   
   try {
     [blocks, featured] = await Promise.all([
-      prisma.contentBlock.findMany({
-        where: { page: "home" },
-        orderBy: { order: "asc" }
-      }),
-      prisma.featuredDish.findMany({
-        include: {
-          menuItem: {
-            include: { category: true }
-          }
-        },
-        orderBy: { order: "asc" }
-      })
+      contentBlockQueries.findMany({ page: "home" }),
+      featuredDishQueries.findMany()
     ]);
   } catch (error) {
     console.error('Database error on homepage:', error);

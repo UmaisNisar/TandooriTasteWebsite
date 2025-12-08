@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { userQueries } from '@/lib/db-helpers';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
@@ -17,9 +17,7 @@ export async function POST(request: Request) {
     const normalizedEmail = String(email).toLowerCase().trim();
     console.log("[TEST-AUTH] Normalized email:", normalizedEmail);
     
-    const user = await prisma.user.findUnique({ 
-      where: { email: normalizedEmail } 
-    });
+    const user = await userQueries.findUnique({ email: normalizedEmail });
     
     console.log("[TEST-AUTH] User found:", user ? {
       id: user.id,
@@ -29,7 +27,6 @@ export async function POST(request: Request) {
     } : "null");
 
     if (!user) {
-      await prisma.$disconnect();
       return NextResponse.json({
         step: 'user_lookup',
         success: false,
@@ -38,7 +35,6 @@ export async function POST(request: Request) {
     }
 
     if (user.role !== "ADMIN") {
-      await prisma.$disconnect();
       return NextResponse.json({
         step: 'role_check',
         success: false,
@@ -49,8 +45,6 @@ export async function POST(request: Request) {
     console.log("[TEST-AUTH] Comparing password...");
     const valid = await bcrypt.compare(password, user.password);
     console.log("[TEST-AUTH] Password match:", valid);
-
-    await prisma.$disconnect();
 
     if (!valid) {
       return NextResponse.json({
@@ -72,7 +66,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("[TEST-AUTH] Error:", error);
-    await prisma.$disconnect();
     return NextResponse.json({
       error: String(error),
       message: 'Error during authentication test'

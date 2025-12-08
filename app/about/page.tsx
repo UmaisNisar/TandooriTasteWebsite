@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
-import { prisma } from "@/lib/prisma";
+import { contentBlockQueries } from "@/lib/db-helpers";
 
 export const metadata: Metadata = {
   title: "About Us | Tandoori Tastes · Pakistani Heart in Sudbury",
@@ -17,10 +17,7 @@ export default async function AboutPage() {
   let blocks: any[] = [];
   
   try {
-    blocks = await prisma.contentBlock.findMany({
-      where: { page: "about" },
-      orderBy: { order: "asc" }
-    });
+    blocks = await contentBlockQueries.findMany({ page: "about" });
   } catch (error) {
     console.error('Database error on about page:', error);
     // Continue with empty array - page will still render

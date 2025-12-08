@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { contentBlockQueries } from "@/lib/db-helpers";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -11,11 +11,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const where = page ? { page } : {};
-  const blocks = await prisma.contentBlock.findMany({
-    where,
-    orderBy: { order: "asc" }
-  });
+  const blocks = await contentBlockQueries.findMany(page ? { page } : undefined);
   return NextResponse.json(blocks);
 }
 
@@ -35,13 +31,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const block = await prisma.contentBlock.create({
-    data: {
-      page,
-      section,
-      content: content || "",
-      order: order || 0
-    }
+  const block = await contentBlockQueries.upsert({
+    page,
+    section,
+    content: content || "",
+    order: order || 0
   });
 
   return NextResponse.json(block);

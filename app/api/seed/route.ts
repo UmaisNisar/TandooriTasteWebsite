@@ -1,21 +1,17 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { contentBlockQueries, storeHoursQueries, reviewQueries, userQueries } from '@/lib/db-helpers';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
 
 // Helper function to ensure ContentBlock exists
 async function ensureContentBlock(page: string, section: string, data: any) {
-  const existing = await prisma.contentBlock.findFirst({
-    where: {
-      page,
-      section
-    }
-  });
+  const existing = await contentBlockQueries.findFirst({ page, section });
 
   if (!existing) {
-    await prisma.contentBlock.create({
-      data
+    await contentBlockQueries.upsert({
+      page,
+      section,
+      content: data.content,
+      order: data.order || 0
     });
   }
 }
@@ -134,10 +130,11 @@ export async function GET() {
     ];
 
     for (const hours of storeHours) {
-      await prisma.storeHours.upsert({
-        where: { dayOfWeek: hours.dayOfWeek },
-        update: {},
-        create: hours
+      await storeHoursQueries.upsert({
+        dayOfWeek: hours.dayOfWeek,
+        openTime: hours.openTime || undefined,
+        closeTime: hours.closeTime || undefined,
+        isClosed: hours.isClosed
       });
     }
 
@@ -168,39 +165,27 @@ export async function GET() {
 
     // Only create reviews if they don't exist (check by reviewer name)
     for (const review of reviews) {
-      const existing = await prisma.review.findFirst({
-        where: {
-          reviewerName: review.reviewerName,
-          text: review.text
-        }
+      const existing = await reviewQueries.findFirst({
+        reviewerName: review.reviewerName,
+        text: review.text
       });
 
       if (!existing) {
-        await prisma.review.create({
-          data: review
-        });
+        await reviewQueries.create(review);
       }
     }
 
     // Seed initial admin user - delete existing and create fresh
-    await prisma.user.deleteMany({
-      where: {
-        email: "admin"
-      }
-    });
+    await userQueries.deleteMany({ email: "admin" });
 
     const hashedPassword = await bcrypt.hash("admin123", 10);
     
-    await prisma.user.create({
-      data: {
-        email: "admin",
-        password: hashedPassword,
-        name: "Admin User",
-        role: "ADMIN"
-      }
+    await userQueries.create({
+      email: "admin",
+      password: hashedPassword,
+      name: "Admin User",
+      role: "ADMIN"
     });
-
-    await prisma.$disconnect();
 
     return NextResponse.json({ 
       success: true, 
@@ -208,7 +193,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Seeding error:', error);
-    await prisma.$disconnect();
     return NextResponse.json({ 
       error: String(error) 
     }, { status: 500 });
