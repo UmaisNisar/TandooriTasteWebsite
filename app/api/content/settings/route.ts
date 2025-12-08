@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const settings = await siteSettingsQueries.findMany();
     const settingsMap = Object.fromEntries(
-      settings.map((s) => [s.key, s.value])
+      settings.map((s: { key: string; value: string }) => [s.key, s.value])
     );
     return NextResponse.json(settingsMap);
   } catch (error) {

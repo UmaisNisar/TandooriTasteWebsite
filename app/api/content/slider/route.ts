@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export async function GET() {
   try {
     const slides = await homeSliderQueries.findMany();
-    const activeSlides = slides.filter(s => s.isActive).sort((a, b) => a.order - b.order);
+    const activeSlides = slides.filter((s: { isActive: boolean }) => s.isActive).sort((a: { order: number }, b: { order: number }) => a.order - b.order);
     return NextResponse.json(activeSlides);
   } catch (error) {
     console.error('Error fetching slider:', error);

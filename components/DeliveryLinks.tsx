@@ -5,7 +5,7 @@ export default async function DeliveryLinks() {
   try {
     const settings = await storeSettingsQueries.findMany();
     const settingsMap = Object.fromEntries(
-      settings.map((s) => [s.key, s.value])
+      settings.map((s: { key: string; value: string }) => [s.key, s.value])
     );
 
     const links = [

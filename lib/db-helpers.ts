@@ -213,7 +213,7 @@ export const featuredDishQueries = {
         ORDER BY fd."order" ASC`
       );
       // Transform the flat result into nested structure
-      return result.rows.map(row => ({
+      return result.rows.map((row: any) => ({
         id: row.id,
         menuItemId: row.menuItem_id,
         order: row.order,
@@ -245,7 +245,7 @@ export const featuredDishQueries = {
         JOIN "MenuItem" mi ON fd."menuItemId" = mi.id
         ORDER BY fd."order" ASC`
       );
-      return result.rows.map(row => ({
+      return result.rows.map((row: any) => ({
         id: row.id,
         menuItemId: row.menuItem_id,
         order: row.order,
@@ -381,7 +381,7 @@ export const menuItemQueries = {
     const result = await query(sql, params);
     
     if (includeCategory) {
-      return result.rows.map(row => ({
+      return result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
         description: row.description,

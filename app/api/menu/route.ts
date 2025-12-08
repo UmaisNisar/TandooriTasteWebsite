@@ -19,11 +19,11 @@ export async function GET() {
       ORDER BY mi.name ASC`
     );
     
-    const items = itemsResult.rows.map(row => ({
+    const items = itemsResult.rows.map((row: { id: string; name: string; description: string; price: number | string; imageUrl: string | null; categoryId: string; isAvailable: boolean; order: number; createdAt: string; updatedAt: string; category_id: string; category_name: string; category_slug: string }) => ({
       id: row.id,
       name: row.name,
       description: row.description,
-      price: parseFloat(row.price),
+      price: typeof row.price === 'string' ? parseFloat(row.price) : row.price,
       imageUrl: row.imageUrl,
       categoryId: row.categoryId,
       createdAt: row.createdAt,
