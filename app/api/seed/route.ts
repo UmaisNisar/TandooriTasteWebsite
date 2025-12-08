@@ -4,17 +4,26 @@ import bcrypt from 'bcryptjs';
 
 export const runtime = 'nodejs';
 
+// Helper to add small delay between operations
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 // Helper function to ensure ContentBlock exists
 async function ensureContentBlock(page: string, section: string, data: any) {
-  const existing = await contentBlockQueries.findFirst({ page, section });
+  try {
+    const existing = await contentBlockQueries.findFirst({ page, section });
 
-  if (!existing) {
-    await contentBlockQueries.upsert({
-      page,
-      section,
-      content: data.content,
-      order: data.order || 0
-    });
+    if (!existing) {
+      await contentBlockQueries.upsert({
+        page,
+        section,
+        content: data.content,
+        order: data.order || 0
+      });
+      await delay(100); // Small delay to avoid overwhelming connection
+    }
+  } catch (error: any) {
+    console.error(`Error creating content block ${page}/${section}:`, error.message);
+    throw error;
   }
 }
 
@@ -67,6 +76,7 @@ export async function GET() {
       }
     ];
 
+    console.log("📝 Seeding homepage content...");
     for (const block of homeBlocks) {
       await ensureContentBlock(block.page, block.section, block);
     }
@@ -96,6 +106,7 @@ export async function GET() {
       }
     ];
 
+    console.log("📝 Seeding about page content...");
     for (const block of aboutBlocks) {
       await ensureContentBlock(block.page, block.section, block);
     }
@@ -118,7 +129,9 @@ export async function GET() {
       order: 0
     };
 
+    console.log("📝 Seeding contact page content...");
     await ensureContentBlock(contactBlock.page, contactBlock.section, contactBlock);
+    await delay(200);
 
     // Seed Store Hours
     const storeHours = [
@@ -131,14 +144,22 @@ export async function GET() {
       { dayOfWeek: 6, openTime: "11:00", closeTime: "22:00", isClosed: false } // Saturday
     ];
 
+    console.log("🕐 Seeding store hours...");
     for (const hours of storeHours) {
-      await storeHoursQueries.upsert({
-        dayOfWeek: hours.dayOfWeek,
-        openTime: hours.openTime || undefined,
-        closeTime: hours.closeTime || undefined,
-        isClosed: hours.isClosed
-      });
+      try {
+        await storeHoursQueries.upsert({
+          dayOfWeek: hours.dayOfWeek,
+          openTime: hours.openTime || undefined,
+          closeTime: hours.closeTime || undefined,
+          isClosed: hours.isClosed
+        });
+        await delay(100);
+      } catch (error: any) {
+        console.error(`Error seeding store hours for day ${hours.dayOfWeek}:`, error.message);
+        throw error;
+      }
     }
+    await delay(200);
 
     // Seed Reviews
     const reviews = [
@@ -166,37 +187,57 @@ export async function GET() {
     ];
 
     // Only create reviews if they don't exist (check by reviewer name)
+    console.log("⭐ Seeding reviews...");
     for (const review of reviews) {
-      const existing = await reviewQueries.findFirst({
-        reviewerName: review.reviewerName,
-        text: review.text
-      });
+      try {
+        const existing = await reviewQueries.findFirst({
+          reviewerName: review.reviewerName,
+          text: review.text
+        });
 
-      if (!existing) {
-        await reviewQueries.create(review);
+        if (!existing) {
+          await reviewQueries.create(review);
+          await delay(100);
+        }
+      } catch (error: any) {
+        console.error(`Error creating review for ${review.reviewerName}:`, error.message);
+        throw error;
       }
     }
+    await delay(200);
 
     // Seed initial admin user - delete existing and create fresh
-    await userQueries.deleteMany({ email: "admin" });
+    console.log("👤 Creating admin user...");
+    try {
+      await userQueries.deleteMany({ email: "admin" });
+      await delay(200);
 
-    const hashedPassword = await bcrypt.hash("admin123", 10);
-    
-    await userQueries.create({
-      email: "admin",
-      password: hashedPassword,
-      name: "Admin User",
-      role: "ADMIN"
-    });
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+      
+      await userQueries.create({
+        email: "admin",
+        password: hashedPassword,
+        name: "Admin User",
+        role: "ADMIN"
+      });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Database seeded successfully! Admin user: admin / admin123' 
-    });
-  } catch (error) {
+      console.log("✅ Seeding completed successfully!");
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Database seeded successfully! Admin user: admin / admin123' 
+      });
+    } catch (error: any) {
+      console.error('Error creating admin user:', error.message);
+      throw error;
+    }
+  } catch (error: any) {
     console.error('Seeding error:', error);
     return NextResponse.json({ 
-      error: String(error) 
+      success: false,
+      error: error.message || String(error),
+      hint: error.code === 'ENOTFOUND' 
+        ? 'Database connection failed. Check DATABASE_URL in Vercel environment variables. Make sure you\'re using the correct Supabase connection string with ?sslmode=require'
+        : undefined
     }, { status: 500 });
   }
 }
