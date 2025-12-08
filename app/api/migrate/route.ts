@@ -52,9 +52,17 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error('[MIGRATE] Migration error:', error);
+    const isConnectionError = error.code === 'ENOTFOUND' || 
+                              error.message?.includes('getaddrinfo') ||
+                              error.message?.includes('DATABASE_URL');
+    
     return NextResponse.json({
       success: false,
       error: error.message,
+      hint: isConnectionError 
+        ? 'Database connection failed. DATABASE_URL is not set in Vercel environment variables. Go to Vercel Dashboard → Settings → Environment Variables → Add DATABASE_URL with your Supabase connection string, then redeploy.'
+        : undefined,
+      checkConfig: '/api/check-db-config',
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 });
   }
