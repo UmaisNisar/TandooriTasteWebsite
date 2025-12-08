@@ -24,8 +24,14 @@ export const { handlers, auth } = NextAuth({
           const password = String(credentials.password);
           console.log("[AUTH] Looking for user with email:", email);
           
-          const user = await prisma.user.findUnique({ where: { email } });
-          console.log("[AUTH] User found:", user ? { id: user.id, email: user.email, role: user.role } : "null");
+          let user;
+          try {
+            user = await prisma.user.findUnique({ where: { email } });
+            console.log("[AUTH] User found:", user ? { id: user.id, email: user.email, role: user.role } : "null");
+          } catch (dbError) {
+            console.error("[AUTH] Database error:", dbError);
+            throw dbError;
+          }
 
           // User must exist in database
           if (!user) {
@@ -41,8 +47,14 @@ export const { handlers, auth } = NextAuth({
 
           // Password must match
           console.log("[AUTH] Comparing password...");
-          const valid = await bcrypt.compare(password, user.password);
-          console.log("[AUTH] Password match:", valid);
+          let valid;
+          try {
+            valid = await bcrypt.compare(password, user.password);
+            console.log("[AUTH] Password match:", valid);
+          } catch (bcryptError) {
+            console.error("[AUTH] Bcrypt error:", bcryptError);
+            return null;
+          }
           
           if (!valid) {
             console.log("[AUTH] Password does not match");
@@ -58,6 +70,7 @@ export const { handlers, auth } = NextAuth({
           };
         } catch (error) {
           console.error("[AUTH] Error in authorize:", error);
+          console.error("[AUTH] Error stack:", error instanceof Error ? error.stack : "No stack");
           return null;
         }
       }
