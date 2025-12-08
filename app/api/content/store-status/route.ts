@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
+  try {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
@@ -74,11 +77,18 @@ export async function GET() {
 
   const isOpen = now >= openTime && now < closeTime;
 
-  return NextResponse.json({
-    isOpen,
-    openTime: hours.openTime,
-    closeTime: hours.closeTime,
-    reason: isOpen ? "Open now" : "Closed"
-  });
+    return NextResponse.json({
+      isOpen,
+      openTime: hours.openTime,
+      closeTime: hours.closeTime,
+      reason: isOpen ? "Open now" : "Closed"
+    });
+  } catch (error) {
+    console.error('Error fetching store status:', error);
+    return NextResponse.json({
+      isOpen: false,
+      reason: "Unable to determine status"
+    }, { status: 200 });
+  }
 }
 

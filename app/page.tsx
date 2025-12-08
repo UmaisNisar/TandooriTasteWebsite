@@ -8,21 +8,33 @@ import CTASection from "@/components/CTASection";
 import StoreStatus from "@/components/StoreStatus";
 import HomeSlider from "@/components/HomeSlider";
 
+// Force dynamic rendering to avoid build-time database access
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function HomePage() {
-  const [blocks, featured] = await Promise.all([
-    prisma.contentBlock.findMany({
-      where: { page: "home" },
-      orderBy: { order: "asc" }
-    }),
-    prisma.featuredDish.findMany({
-      include: {
-        menuItem: {
-          include: { category: true }
-        }
-      },
-      orderBy: { order: "asc" }
-    })
-  ]);
+  let blocks: any[] = [];
+  let featured: any[] = [];
+  
+  try {
+    [blocks, featured] = await Promise.all([
+      prisma.contentBlock.findMany({
+        where: { page: "home" },
+        orderBy: { order: "asc" }
+      }),
+      prisma.featuredDish.findMany({
+        include: {
+          menuItem: {
+            include: { category: true }
+          }
+        },
+        orderBy: { order: "asc" }
+      })
+    ]);
+  } catch (error) {
+    console.error('Database error on homepage:', error);
+    // Continue with empty arrays - page will still render
+  }
 
   const heroBlock = blocks.find((b) => b.section === "hero");
   const heroData = heroBlock ? JSON.parse(heroBlock.content || "{}") : null;

@@ -9,11 +9,22 @@ export const metadata: Metadata = {
     "Discover the story of Tandoori Tastes in Sudbury: our Pakistani roots, chef, and philosophy behind every tandoori, curry and biryani we serve."
 };
 
+// Force dynamic rendering to avoid build-time database access
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function AboutPage() {
-  const blocks = await prisma.contentBlock.findMany({
-    where: { page: "about" },
-    orderBy: { order: "asc" }
-  });
+  let blocks: any[] = [];
+  
+  try {
+    blocks = await prisma.contentBlock.findMany({
+      where: { page: "about" },
+      orderBy: { order: "asc" }
+    });
+  } catch (error) {
+    console.error('Database error on about page:', error);
+    // Continue with empty array - page will still render
+  }
 
   const storyBlock = blocks.find((b) => b.section === "story");
   const chefBlock = blocks.find((b) => b.section === "chef");
