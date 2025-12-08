@@ -22,6 +22,7 @@ function AdminLoginForm() {
     const password = formData.get("password") as string;
 
     try {
+      console.log("[LOGIN] Attempting sign in with email:", email);
       const result = await signIn("credentials", {
         email,
         password,
@@ -29,15 +30,24 @@ function AdminLoginForm() {
         redirect: false
       });
 
+      console.log("[LOGIN] Sign in result:", result);
+
       if (result?.error) {
-        setError("Invalid email or password. Please try again.");
+        console.error("[LOGIN] Sign in error:", result.error);
+        setError(`Login failed: ${result.error}. Please try again.`);
         setLoading(false);
-      } else {
+      } else if (result?.ok) {
+        console.log("[LOGIN] Sign in successful, redirecting...");
         router.push(callbackUrl);
         router.refresh();
+      } else {
+        console.log("[LOGIN] Unexpected result:", result);
+        setError("Invalid email or password. Please try again.");
+        setLoading(false);
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      console.error("[LOGIN] Exception during sign in:", err);
+      setError(`An error occurred: ${err instanceof Error ? err.message : "Unknown error"}`);
       setLoading(false);
     }
   };
