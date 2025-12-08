@@ -2,21 +2,124 @@ import { prisma } from "@/lib/prisma";
 import DeliveryLinks from "./DeliveryLinks";
 
 export default async function ContactSection() {
-  const [blocks, storeData] = await Promise.all([
-    prisma.contentBlock.findMany({
-      where: { page: "contact" },
-      orderBy: { order: "asc" }
-    }),
-    prisma.storeHours.findMany({
-      orderBy: { dayOfWeek: "asc" }
-    })
-  ]);
+  let blocks: any[] = [];
+  let storeData: any[] = [];
+  
+  try {
+    [blocks, storeData] = await Promise.all([
+      prisma.contentBlock.findMany({
+        where: { page: "contact" },
+        orderBy: { order: "asc" }
+      }),
+      prisma.storeHours.findMany({
+        orderBy: { dayOfWeek: "asc" }
+      })
+    ]);
+  } catch (error) {
+    console.error('Database error on contact page:', error);
+    // Continue with empty arrays - page will still render with fallback content
+  }
 
   const infoBlock = blocks.find((b) => b.section === "info");
   const contactData = infoBlock ? JSON.parse(infoBlock.content || "{}") : null;
 
+  // Provide fallback content if database data is not available
   if (!contactData) {
-    return null;
+    return (
+      <section className="section-padding">
+        <div className="container-section grid gap-10 lg:grid-cols-2 lg:items-start">
+          <div className="space-y-6">
+            <div>
+              <h2 className="section-heading">Visit or reach out</h2>
+              <p className="section-subtitle">
+                Join us in downtown Sudbury for lunch or dinner, or call ahead for
+                takeout and catering enquiries.
+              </p>
+            </div>
+            <div className="card-surface p-5 text-sm text-gray-200">
+              <h3 className="mb-2 font-heading text-base text-gold">Location</h3>
+              <p className="text-gray-400">Contact information will be available soon.</p>
+            </div>
+            <div className="pt-4">
+              <DeliveryLinks />
+            </div>
+          </div>
+          <div className="space-y-6">
+            <form className="card-surface space-y-4 p-5 sm:p-6">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="name" className="text-xs font-semibold text-gold">
+                  Name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  required
+                  className="h-10 rounded-md border border-white/15 bg-black/40 px-3 text-sm text-white outline-none ring-gold/50 placeholder:text-gray-500 focus:border-gold/60 focus:ring-1"
+                  placeholder="Your full name"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="email"
+                    className="text-xs font-semibold text-gold"
+                  >
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    className="h-10 rounded-md border border-white/15 bg-black/40 px-3 text-sm text-white outline-none ring-gold/50 placeholder:text-gray-500 focus:border-gold/60 focus:ring-1"
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="phone"
+                    className="text-xs font-semibold text-gold"
+                  >
+                    Phone
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    className="h-10 rounded-md border border-white/15 bg-black/40 px-3 text-sm text-white outline-none ring-gold/50 placeholder:text-gray-500 focus:border-gold/60 focus:ring-1"
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="message"
+                  className="text-xs font-semibold text-gold"
+                >
+                  Message
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  required
+                  className="min-h-[120px] rounded-md border border-white/15 bg-black/40 px-3 py-2 text-sm text-white outline-none ring-gold/50 placeholder:text-gray-500 focus:border-gold/60 focus:ring-1"
+                  placeholder="Share details about your reservation, catering needs, or questions."
+                />
+              </div>
+              <p className="text-[11px] text-gray-400">
+                This form is front-end only. Connect it to your preferred email or
+                form service (e.g., Formspree, Netlify Forms) before going live.
+              </p>
+              <button
+                type="submit"
+                className="inline-flex w-full items-center justify-center rounded-full bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-charcoal shadow-soft transition hover:bg-white"
+              >
+                Send Message
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
