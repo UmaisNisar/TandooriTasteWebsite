@@ -13,21 +13,35 @@ async function ensureContentBlock(page: string, section: string, data: any) {
     const existing = await contentBlockQueries.findFirst({ page, section });
 
     if (!existing) {
-      await contentBlockQueries.upsert({
+      const result = await contentBlockQueries.upsert({
         page,
         section,
         content: data.content,
         order: data.order || 0
       });
+      console.log(`✅ Created/Updated content block: ${page}/${section}`);
       await delay(100); // Small delay to avoid overwhelming connection
+      return result;
+    } else {
+      console.log(`ℹ️  Content block already exists: ${page}/${section}`);
+      return existing;
     }
   } catch (error: any) {
-    console.error(`Error creating content block ${page}/${section}:`, error.message);
+    console.error(`❌ Error creating content block ${page}/${section}:`, error.message);
+    console.error(`   Error code:`, error.code);
+    console.error(`   Error stack:`, error.stack);
     throw error;
   }
 }
 
 export async function GET() {
+  const results = {
+    contentBlocks: { created: 0, updated: 0, errors: 0 },
+    storeHours: { created: 0, updated: 0, errors: 0 },
+    reviews: { created: 0, skipped: 0, errors: 0 },
+    adminUser: { created: false, error: null }
+  };
+
   try {
     console.log("🌱 Seeding database...");
 
@@ -78,7 +92,18 @@ export async function GET() {
 
     console.log("📝 Seeding homepage content...");
     for (const block of homeBlocks) {
-      await ensureContentBlock(block.page, block.section, block);
+      try {
+        const existing = await contentBlockQueries.findFirst({ page: block.page, section: block.section });
+        await ensureContentBlock(block.page, block.section, block);
+        if (existing) {
+          results.contentBlocks.updated++;
+        } else {
+          results.contentBlocks.created++;
+        }
+      } catch (error: any) {
+        console.error(`Failed to seed homepage block ${block.section}:`, error.message);
+        results.contentBlocks.errors++;
+      }
     }
 
     // Seed About Page Content
@@ -108,7 +133,18 @@ export async function GET() {
 
     console.log("📝 Seeding about page content...");
     for (const block of aboutBlocks) {
-      await ensureContentBlock(block.page, block.section, block);
+      try {
+        const existing = await contentBlockQueries.findFirst({ page: block.page, section: block.section });
+        await ensureContentBlock(block.page, block.section, block);
+        if (existing) {
+          results.contentBlocks.updated++;
+        } else {
+          results.contentBlocks.created++;
+        }
+      } catch (error: any) {
+        console.error(`Failed to seed about block ${block.section}:`, error.message);
+        results.contentBlocks.errors++;
+      }
     }
 
     // Seed Contact Page Content
@@ -130,7 +166,18 @@ export async function GET() {
     };
 
     console.log("📝 Seeding contact page content...");
-    await ensureContentBlock(contactBlock.page, contactBlock.section, contactBlock);
+    try {
+      const existing = await contentBlockQueries.findFirst({ page: contactBlock.page, section: contactBlock.section });
+      await ensureContentBlock(contactBlock.page, contactBlock.section, contactBlock);
+      if (existing) {
+        results.contentBlocks.updated++;
+      } else {
+        results.contentBlocks.created++;
+      }
+    } catch (error: any) {
+      console.error(`Failed to seed contact block:`, error.message);
+      results.contentBlocks.errors++;
+    }
     await delay(200);
 
     // Seed Store Hours
@@ -147,16 +194,22 @@ export async function GET() {
     console.log("🕐 Seeding store hours...");
     for (const hours of storeHours) {
       try {
+        const existing = await storeHoursQueries.findUnique({ dayOfWeek: hours.dayOfWeek });
         await storeHoursQueries.upsert({
           dayOfWeek: hours.dayOfWeek,
           openTime: hours.openTime || undefined,
           closeTime: hours.closeTime || undefined,
           isClosed: hours.isClosed
         });
+        if (existing) {
+          results.storeHours.updated++;
+        } else {
+          results.storeHours.created++;
+        }
         await delay(100);
       } catch (error: any) {
         console.error(`Error seeding store hours for day ${hours.dayOfWeek}:`, error.message);
-        throw error;
+        results.storeHours.errors++;
       }
     }
     await delay(200);
@@ -197,11 +250,14 @@ export async function GET() {
 
         if (!existing) {
           await reviewQueries.create(review);
+          results.reviews.created++;
           await delay(100);
+        } else {
+          results.reviews.skipped++;
         }
       } catch (error: any) {
         console.error(`Error creating review for ${review.reviewerName}:`, error.message);
-        throw error;
+        results.reviews.errors++;
       }
     }
     await delay(200);
@@ -220,14 +276,20 @@ export async function GET() {
         name: "Admin User",
         role: "ADMIN"
       });
+      results.adminUser.created = true;
+      console.log("✅ Admin user created successfully!");
 
-      console.log("✅ Seeding completed successfully!");
+      console.log("✅ Seeding completed!");
+      console.log("📊 Results:", JSON.stringify(results, null, 2));
+      
       return NextResponse.json({ 
         success: true, 
-        message: 'Database seeded successfully! Admin user: admin / admin123' 
+        message: 'Database seeded successfully! Admin user: admin / admin123',
+        results: results
       });
     } catch (error: any) {
       console.error('Error creating admin user:', error.message);
+      results.adminUser.error = error.message;
       throw error;
     }
   } catch (error: any) {
@@ -235,9 +297,10 @@ export async function GET() {
     return NextResponse.json({ 
       success: false,
       error: error.message || String(error),
+      results: results,
       hint: error.code === 'ENOTFOUND' 
         ? 'Database connection failed. Check DATABASE_URL in Vercel environment variables. Make sure you\'re using the correct Supabase connection string with ?sslmode=require'
-        : undefined
+        : 'Some data may have been seeded. Check the results object for details.'
     }, { status: 500 });
   }
 }

@@ -27,7 +27,17 @@ export default async function HomePage() {
   }
 
   const heroBlock = blocks.find((b) => b.section === "hero");
-  const heroData = heroBlock ? JSON.parse(heroBlock.content || "{}") : null;
+  let heroData = heroBlock ? JSON.parse(heroBlock.content || "{}") : null;
+
+  // Default hero data if not found
+  if (!heroData || Object.keys(heroData).length === 0) {
+    heroData = {
+      title: "Fire-kissed tandoori and slow-cooked curries",
+      subtitle: "Tandoori Tastes brings the warmth of Pakistani hospitality and charcoal-fired flavour to Northern Ontario.",
+      cta1: "Order Now",
+      cta2: "View Full Menu"
+    };
+  }
 
   const featuredDishes = featured.map((f) => ({
     name: f.menuItem.name,
@@ -41,10 +51,6 @@ export default async function HomePage() {
   const whyChooseUsData = whyChooseUsBlock
     ? JSON.parse(whyChooseUsBlock.content || "{}")
     : null;
-
-  if (!heroData) {
-    return null;
-  }
 
   return (
     <>
