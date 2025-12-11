@@ -30,14 +30,13 @@ function createPool() {
     ssl: connectionString.includes('sslmode=require') 
       ? { rejectUnauthorized: false } 
       : undefined,
-    max: 10, // Reduced for serverless
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 30000, // Increased timeout for serverless
-    // For serverless, we want to keep connections alive longer
-    keepAlive: true,
-    keepAliveInitialDelayMillis: 10000,
-    // Allow the pool to retry connections
-    allowExitOnIdle: false,
+    max: 2, // Very small pool for serverless to avoid "max clients reached" errors
+    idleTimeoutMillis: 10000, // Shorter idle timeout to release connections faster
+    connectionTimeoutMillis: 10000, // Shorter timeout
+    // For serverless, release connections quickly
+    keepAlive: false, // Don't keep connections alive in serverless
+    // Allow the pool to exit when idle to free up connections
+    allowExitOnIdle: true,
   });
 
   // Add error handler to pool
@@ -88,7 +87,9 @@ export async function query(text: string, params?: any[], retries = 3): Promise<
   let lastError: any;
   
   for (let attempt = 1; attempt <= retries; attempt++) {
+    let client;
     try {
+      // Use pool.query which automatically manages connection lifecycle
       const res = await pool.query(text, params);
       const duration = Date.now() - start;
       if (process.env.NODE_ENV === 'development') {
@@ -114,6 +115,19 @@ export async function query(text: string, params?: any[], retries = 3): Promise<
         console.error('[DB] 3. The database server is not accessible from Vercel');
         console.error('[DB] Try using Supabase connection pooler instead of direct connection');
         console.error('[DB] Connection string preview:', dbUrl.replace(/:[^:@]+@/, ':****@'));
+      }
+      
+      // Handle pool exhaustion errors
+      if (error.message?.includes('max clients reached') || error.message?.includes('MaxClientsInSessionMode')) {
+        console.error('[DB] Connection pool exhausted. This usually means too many concurrent connections.');
+        console.error('[DB] Consider using Supabase connection pooler URL (port 6543) instead of direct connection (port 5432)');
+        // Wait longer before retrying for pool exhaustion
+        if (attempt < retries) {
+          const waitTime = attempt * 5000; // Longer wait for pool exhaustion (5s, 10s, 15s)
+          console.log(`[DB] Waiting ${waitTime}ms for pool to free up...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
       }
       
       // If it's a connection error and we have retries left, wait and retry

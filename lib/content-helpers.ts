@@ -166,3 +166,68 @@ export async function fetchHolidays(startDate: Date, endDate: Date): Promise<Hol
   }
 }
 
+// Fetch featured dishes with menu items
+export async function fetchFeaturedDishes(): Promise<Array<{
+  id: string;
+  menuItemId: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+  menuItem: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    imageUrl: string | null;
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    } | null;
+  } | null;
+}>> {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('FeaturedDish')
+      .select(`
+        *,
+        MenuItem (
+          *,
+          Category (
+            *
+          )
+        )
+      `)
+      .order('order', { ascending: true });
+
+    if (error) throw error;
+
+    // Transform to nested structure
+    const featured = (data || []).map((row: any) => ({
+      id: row.id,
+      menuItemId: row.menuItemId,
+      order: row.order,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      menuItem: row.MenuItem ? {
+        id: row.MenuItem.id,
+        name: row.MenuItem.name,
+        description: row.MenuItem.description,
+        price: parseFloat(row.MenuItem.price),
+        imageUrl: row.MenuItem.imageUrl,
+        category: row.MenuItem.Category ? {
+          id: row.MenuItem.Category.id,
+          name: row.MenuItem.Category.name,
+          slug: row.MenuItem.Category.slug,
+        } : null,
+      } : null,
+    })).filter((f: any) => f.menuItem); // Filter out any with missing menu items
+
+    return featured;
+  } catch (error: any) {
+    console.error('Error fetching featured dishes:', error);
+    return [];
+  }
+}
+

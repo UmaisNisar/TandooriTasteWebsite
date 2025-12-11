@@ -1,5 +1,4 @@
-import { featuredDishQueries } from "@/lib/db-helpers";
-import { fetchSliderData, fetchReviewsData, fetchContentBlocks } from "@/lib/content-helpers";
+import { fetchSliderData, fetchReviewsData, fetchContentBlocks, fetchFeaturedDishes } from "@/lib/content-helpers";
 import Image from "next/image";
 import Link from "next/link";
 import BestSellers from "@/components/BestSellers";
@@ -21,7 +20,7 @@ export default async function HomePage() {
   try {
     [blocks, featured, slides, reviews] = await Promise.all([
       fetchContentBlocks("home"),
-      featuredDishQueries.findMany(true), // Include menu items with category info
+      fetchFeaturedDishes(), // Fetch featured dishes using Supabase
       fetchSliderData(),
       fetchReviewsData()
     ]);
