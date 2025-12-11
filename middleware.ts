@@ -20,6 +20,19 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Check if NEXTAUTH_SECRET is set (basic validation)
+  if (!process.env.NEXTAUTH_SECRET) {
+    console.error("[MIDDLEWARE] NEXTAUTH_SECRET is not set");
+    // Allow login page to load, redirect others
+    if (pathname.startsWith("/admin/login")) {
+      return NextResponse.next();
+    }
+    const loginUrl = new URL("/admin/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
+    loginUrl.searchParams.set("error", "configuration");
+    return NextResponse.redirect(loginUrl);
+  }
+
   try {
     const session = await auth();
     
@@ -43,6 +56,7 @@ export async function middleware(req: NextRequest) {
     // If auth fails (e.g., NEXTAUTH_SECRET not set), allow access to login page
     // but redirect other admin routes to login
     console.error("[MIDDLEWARE] Auth error:", error);
+    console.error("[MIDDLEWARE] Error details:", error instanceof Error ? error.message : String(error));
     
     // If we're already on login page, allow it
     if (pathname.startsWith("/admin/login")) {
