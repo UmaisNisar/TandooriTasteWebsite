@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { contentBlockQueries, storeHoursQueries, reviewQueries, userQueries } from '@/lib/db-helpers';
+import { contentBlockQueries, storeHoursQueries, reviewQueries, userQueries, categoryQueries, menuItemQueries, featuredDishQueries } from '@/lib/db-helpers';
 import bcrypt from 'bcryptjs';
 
 export const runtime = 'nodejs';
@@ -39,6 +39,9 @@ export async function GET() {
     contentBlocks: { created: 0, updated: 0, errors: 0 },
     storeHours: { created: 0, updated: 0, errors: 0 },
     reviews: { created: 0, skipped: 0, errors: 0 },
+    categories: { created: 0, skipped: 0, errors: 0 },
+    menuItems: { created: 0, skipped: 0, errors: 0 },
+    featuredDishes: { created: 0, skipped: 0, errors: 0 },
     adminUser: { created: false, error: null }
   };
 
@@ -258,6 +261,271 @@ export async function GET() {
       } catch (error: any) {
         console.error(`Error creating review for ${review.reviewerName}:`, error.message);
         results.reviews.errors++;
+      }
+    }
+    await delay(200);
+
+    // Seed Categories
+    const categories = [
+      { name: "Appetizers", slug: "appetizers" },
+      { name: "Tandoori Specialties", slug: "tandoori-specialties" },
+      { name: "Curries & Gravies", slug: "curries-gravies" },
+      { name: "Biryani & Rice", slug: "biryani-rice" },
+      { name: "Bread & Naan", slug: "bread-naan" },
+      { name: "Desserts", slug: "desserts" },
+      { name: "Beverages", slug: "beverages" }
+    ];
+
+    console.log("📂 Seeding categories...");
+    const categoryMap: Record<string, string> = {}; // Store category IDs by slug
+    for (const cat of categories) {
+      try {
+        const existing = await categoryQueries.findUnique({ slug: cat.slug });
+        if (!existing) {
+          const created = await categoryQueries.create(cat);
+          categoryMap[cat.slug] = created.id;
+          results.categories.created++;
+          console.log(`✅ Created category: ${cat.name}`);
+        } else {
+          categoryMap[cat.slug] = existing.id;
+          results.categories.skipped++;
+          console.log(`ℹ️  Category already exists: ${cat.name}`);
+        }
+        await delay(100);
+      } catch (error: any) {
+        console.error(`Error creating category ${cat.name}:`, error.message);
+        results.categories.errors++;
+      }
+    }
+    await delay(200);
+
+    // Seed Menu Items (Pakistani Cuisine)
+    const menuItems = [
+      // Appetizers
+      {
+        name: "Samosas (2 pcs)",
+        description: "Crispy pastry filled with spiced potatoes and peas, served with mint chutney.",
+        price: 4.99,
+        categorySlug: "appetizers",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Pakora Platter",
+        description: "Assorted vegetable fritters (onion, potato, spinach) deep-fried in chickpea batter.",
+        price: 7.99,
+        categorySlug: "appetizers",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Chicken Tikka",
+        description: "Tender chicken pieces marinated in yogurt and spices, grilled to perfection.",
+        price: 12.99,
+        categorySlug: "appetizers",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      // Tandoori Specialties
+      {
+        name: "Tandoori Chicken (Half)",
+        description: "Half chicken marinated in yogurt, lemon, and aromatic spices, cooked in clay tandoor.",
+        price: 16.99,
+        categorySlug: "tandoori-specialties",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Seekh Kebab",
+        description: "Minced lamb mixed with herbs and spices, skewered and grilled in tandoor.",
+        price: 14.99,
+        categorySlug: "tandoori-specialties",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Tandoori Mixed Grill",
+        description: "Assorted kebabs including chicken tikka, seekh kebab, and boti kebab.",
+        price: 24.99,
+        categorySlug: "tandoori-specialties",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      // Curries & Gravies
+      {
+        name: "Butter Chicken",
+        description: "Creamy tomato-based curry with tender chicken pieces, mild and flavorful.",
+        price: 18.99,
+        categorySlug: "curries-gravies",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Chicken Karahi",
+        description: "Traditional Pakistani curry cooked in a wok with tomatoes, ginger, and green chilies.",
+        price: 19.99,
+        categorySlug: "curries-gravies",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Lamb Curry",
+        description: "Tender lamb pieces slow-cooked in rich, aromatic curry sauce with whole spices.",
+        price: 21.99,
+        categorySlug: "curries-gravies",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Chana Masala",
+        description: "Chickpeas cooked in tangy tomato gravy with onions, garlic, and aromatic spices.",
+        price: 13.99,
+        categorySlug: "curries-gravies",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      // Biryani & Rice
+      {
+        name: "Chicken Biryani",
+        description: "Fragrant basmati rice layered with spiced chicken, saffron, and fried onions.",
+        price: 17.99,
+        categorySlug: "biryani-rice",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Lamb Biryani",
+        description: "Aromatic basmati rice cooked with tender lamb, whole spices, and saffron.",
+        price: 19.99,
+        categorySlug: "biryani-rice",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Vegetable Biryani",
+        description: "Mixed vegetables cooked with basmati rice, saffron, and aromatic spices.",
+        price: 15.99,
+        categorySlug: "biryani-rice",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      // Bread & Naan
+      {
+        name: "Plain Naan",
+        description: "Freshly baked soft bread from the tandoor, perfect for dipping in curries.",
+        price: 3.99,
+        categorySlug: "bread-naan",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Garlic Naan",
+        description: "Naan brushed with garlic butter and fresh cilantro, baked in tandoor.",
+        price: 4.99,
+        categorySlug: "bread-naan",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Butter Naan",
+        description: "Soft naan brushed with butter, light and fluffy from the tandoor.",
+        price: 4.49,
+        categorySlug: "bread-naan",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      // Desserts
+      {
+        name: "Gulab Jamun (2 pcs)",
+        description: "Sweet milk dumplings soaked in rose-scented sugar syrup, served warm.",
+        price: 5.99,
+        categorySlug: "desserts",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Kheer",
+        description: "Creamy rice pudding flavored with cardamom, saffron, and topped with nuts.",
+        price: 6.99,
+        categorySlug: "desserts",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      // Beverages
+      {
+        name: "Mango Lassi",
+        description: "Sweet and creamy yogurt drink blended with fresh mango pulp.",
+        price: 4.99,
+        categorySlug: "beverages",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      },
+      {
+        name: "Sweet Lassi",
+        description: "Traditional yogurt drink sweetened with sugar and flavored with cardamom.",
+        price: 3.99,
+        categorySlug: "beverages",
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+      }
+    ];
+
+    console.log("🍽️  Seeding menu items...");
+    const menuItemMap: Record<string, string> = {}; // Store menu item IDs by name
+    for (const item of menuItems) {
+      try {
+        const categoryId = categoryMap[item.categorySlug];
+        if (!categoryId) {
+          console.error(`Category not found for ${item.name}: ${item.categorySlug}`);
+          results.menuItems.errors++;
+          continue;
+        }
+
+        // Check if menu item already exists by name (check all items, not just category)
+        const allItems = await menuItemQueries.findMany(undefined, false);
+        const existingItem = allItems.find((mi: any) => mi.name === item.name && mi.categoryId === categoryId);
+        
+        if (!existingItem) {
+          const created = await menuItemQueries.create({
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            imageUrl: item.imageUrl,
+            categoryId: categoryId
+          });
+          menuItemMap[item.name] = created.id;
+          results.menuItems.created++;
+          console.log(`✅ Created menu item: ${item.name}`);
+        } else {
+          menuItemMap[item.name] = existingItem.id;
+          results.menuItems.skipped++;
+          console.log(`ℹ️  Menu item already exists: ${item.name}`);
+        }
+        await delay(100);
+      } catch (error: any) {
+        console.error(`Error creating menu item ${item.name}:`, error.message);
+        results.menuItems.errors++;
+      }
+    }
+    await delay(200);
+
+    // Seed Featured Dishes (mark some popular items as featured)
+    const featuredItems = [
+      { name: "Chicken Biryani", order: 0 },
+      { name: "Butter Chicken", order: 1 },
+      { name: "Tandoori Chicken (Half)", order: 2 },
+      { name: "Chicken Karahi", order: 3 }
+    ];
+
+    console.log("⭐ Seeding featured dishes...");
+    for (const featured of featuredItems) {
+      try {
+        const menuItemId = menuItemMap[featured.name];
+        if (!menuItemId) {
+          console.error(`Menu item not found for featured dish: ${featured.name}`);
+          results.featuredDishes.errors++;
+          continue;
+        }
+
+        // Check if already featured
+        const existingFeatured = await featuredDishQueries.findMany();
+        const alreadyFeatured = existingFeatured.some((fd: any) => fd.menuItemId === menuItemId);
+        
+        if (!alreadyFeatured) {
+          await featuredDishQueries.create({
+            menuItemId: menuItemId,
+            order: featured.order
+          });
+          results.featuredDishes.created++;
+          console.log(`✅ Created featured dish: ${featured.name}`);
+        } else {
+          results.featuredDishes.skipped++;
+          console.log(`ℹ️  Already featured: ${featured.name}`);
+        }
+        await delay(100);
+      } catch (error: any) {
+        console.error(`Error creating featured dish ${featured.name}:`, error.message);
+        results.featuredDishes.errors++;
       }
     }
     await delay(200);
