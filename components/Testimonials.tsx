@@ -2,23 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import type { Review } from "@/lib/content-helpers";
 
-type Review = {
-  id: string;
-  reviewerName: string;
-  reviewerImageUrl: string | null;
-  rating: number;
-  text: string;
+type TestimonialsProps = {
+  initialReviews: Review[];
 };
 
-export default function Testimonials() {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function Testimonials({ initialReviews }: TestimonialsProps) {
+  const [reviews] = useState<Review[]>(initialReviews);
   const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    loadReviews();
-  }, []);
 
   useEffect(() => {
     if (reviews.length > 0) {
@@ -28,23 +20,7 @@ export default function Testimonials() {
       );
       return () => clearInterval(id);
     }
-  }, [reviews]);
-
-  const loadReviews = async () => {
-    try {
-      const res = await fetch("/api/content/reviews");
-      const data = await res.json();
-      setReviews(data);
-    } catch (err) {
-      console.error("Failed to load reviews:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return null;
-  }
+  }, [reviews.length]);
 
   if (reviews.length === 0) {
     return null;

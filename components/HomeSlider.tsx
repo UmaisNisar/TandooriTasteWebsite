@@ -2,23 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import type { Slide } from "@/lib/content-helpers";
 
-type Slide = {
-  id: string;
-  imageUrl: string;
-  caption: string | null;
-  altText: string | null;
-  order: number;
+type HomeSliderProps = {
+  initialSlides: Slide[];
 };
 
-export default function HomeSlider() {
-  const [slides, setSlides] = useState<Slide[]>([]);
+export default function HomeSlider({ initialSlides }: HomeSliderProps) {
+  const [slides] = useState<Slide[]>(initialSlides);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadSlides();
-  }, []);
 
   useEffect(() => {
     if (slides.length > 1) {
@@ -28,22 +20,6 @@ export default function HomeSlider() {
       return () => clearInterval(interval);
     }
   }, [slides.length]);
-
-  const loadSlides = async () => {
-    try {
-      const res = await fetch("/api/content/slider");
-      const data = await res.json();
-      setSlides(data);
-    } catch (err) {
-      console.error("Failed to load slider:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return null;
-  }
 
   if (slides.length === 0) {
     return null;

@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // Prevent static generation
+export const maxDuration = 60; // Allow up to 60 seconds for seeding (Vercel Pro) or 10s (Free tier)
 
 // Helper to add small delay between operations
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -36,6 +37,9 @@ async function ensureContentBlock(page: string, section: string, data: any) {
 }
 
 export async function GET() {
+  const startTime = Date.now();
+  const MAX_DURATION = 50000; // 50 seconds to allow for response time
+  
   // Check DATABASE_URL early
   if (!process.env.DATABASE_URL) {
     return NextResponse.json({ 
@@ -44,6 +48,14 @@ export async function GET() {
       hint: 'Please set DATABASE_URL in Vercel environment variables'
     }, { status: 500 });
   }
+  
+  // Helper to check if we're running out of time
+  const checkTimeout = () => {
+    const elapsed = Date.now() - startTime;
+    if (elapsed > MAX_DURATION) {
+      throw new Error(`Seeding operation timed out after ${elapsed}ms. Some data may have been seeded. Check the results object.`);
+    }
+  };
 
   const results = {
     contentBlocks: { created: 0, updated: 0, errors: 0 },
@@ -107,6 +119,7 @@ export async function GET() {
     console.log("📝 Seeding homepage content...");
     for (const block of homeBlocks) {
       try {
+        checkTimeout();
         const existing = await contentBlockQueries.findFirst({ page: block.page, section: block.section });
         await ensureContentBlock(block.page, block.section, block);
         if (existing) {
@@ -115,6 +128,7 @@ export async function GET() {
           results.contentBlocks.created++;
         }
       } catch (error: any) {
+        if (error.message?.includes('timed out')) throw error;
         console.error(`Failed to seed homepage block ${block.section}:`, error.message);
         results.contentBlocks.errors++;
       }
@@ -638,16 +652,20 @@ export async function GET() {
     
   } catch (error: any) {
     console.error('Seeding error:', error);
+    const elapsed = Date.now() - startTime;
+    const isTimeout = error.message?.includes('timed out') || elapsed > MAX_DURATION;
+    
     return NextResponse.json({ 
-      success: false,
+      success: isTimeout ? 'partial' : false,
       error: error.message || String(error),
       results: results,
-      hint: error.message?.includes('timeout')
-        ? 'Seeding operation timed out. This may be due to database connection issues or the operation taking too long. Check Vercel logs for details.'
+      elapsed: `${elapsed}ms`,
+      hint: isTimeout
+        ? 'Seeding operation timed out. Some data may have been seeded. Check the results object. For large datasets, consider seeding in smaller batches or using a database migration script.'
         : error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED'
         ? 'Database connection failed. Check DATABASE_URL in Vercel environment variables. Make sure you\'re using the correct Supabase connection string with ?sslmode=require'
         : 'Some data may have been seeded. Check the results object for details.'
-    }, { status: 500 });
+    }, { status: isTimeout ? 200 : 500 });
   }
 }
 

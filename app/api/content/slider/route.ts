@@ -1,5 +1,5 @@
-import { getSupabase } from "@/lib/supabase-edge";
 import { NextResponse } from "next/server";
+import { fetchSliderData } from "@/lib/content-helpers";
 
 // Use Edge Runtime for maximum performance
 export const runtime = 'edge';
@@ -7,16 +7,8 @@ export const revalidate = 30; // Cache for 30 seconds
 
 export async function GET() {
   try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from('HomeSlider')
-      .select('*')
-      .eq('isActive', true)
-      .order('order', { ascending: true });
-
-    if (error) throw error;
-
-    return NextResponse.json(data || [], {
+    const data = await fetchSliderData();
+    return NextResponse.json(data, {
       headers: {
         'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
       }

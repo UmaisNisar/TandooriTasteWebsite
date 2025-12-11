@@ -1,4 +1,5 @@
 import { contentBlockQueries, featuredDishQueries } from "@/lib/db-helpers";
+import { fetchSliderData, fetchReviewsData } from "@/lib/content-helpers";
 import Image from "next/image";
 import Link from "next/link";
 import BestSellers from "@/components/BestSellers";
@@ -14,17 +15,23 @@ export const revalidate = 30;
 export default async function HomePage() {
   let blocks: any[] = [];
   let featured: any[] = [];
+  let slides: any[] = [];
+  let reviews: any[] = [];
   
   try {
-    [blocks, featured] = await Promise.all([
+    [blocks, featured, slides, reviews] = await Promise.all([
       contentBlockQueries.findMany({ page: "home" }),
-      featuredDishQueries.findMany(true) // Include menu items with category info
+      featuredDishQueries.findMany(true), // Include menu items with category info
+      fetchSliderData(),
+      fetchReviewsData()
     ]);
   } catch (error) {
     console.error('Database error on homepage:', error);
     // Continue with empty arrays - page will still render
     blocks = blocks || [];
     featured = featured || [];
+    slides = slides || [];
+    reviews = reviews || [];
   }
 
   const heroBlock = blocks.find((b) => b.section === "hero");
@@ -107,7 +114,7 @@ export default async function HomePage() {
           </div>
 
           <div className="relative">
-            <HomeSlider />
+            <HomeSlider initialSlides={slides} />
           </div>
         </div>
       </section>
@@ -115,7 +122,7 @@ export default async function HomePage() {
       {whyChooseUsData?.items && whyChooseUsData.items.length > 0 && (
         <WhyChooseUs items={whyChooseUsData.items} />
       )}
-      <Testimonials />
+      <Testimonials initialReviews={reviews} />
       <CTASection />
     </>
   );
