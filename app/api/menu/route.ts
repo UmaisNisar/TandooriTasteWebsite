@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
-import { sql } from '@vercel/postgres';
+import { categoryQueries, menuItemQueries, query } from "@/lib/db-helpers";
 
-// Use Edge Runtime for maximum performance
-export const runtime = 'edge';
+// Use Node.js runtime for Supabase compatibility
+export const runtime = 'nodejs';
 export const revalidate = 30; // Cache for 30 seconds
 
 // Unified menu endpoint - returns all categories, items, and featured dishes in one query
 export async function GET() {
   try {
     // Single optimized query that fetches everything at once
-    const result = await sql`
-      SELECT 
+    const result = await query(
+      `SELECT 
         c.id as category_id,
         c.name as category_name,
         c.slug as category_slug,
@@ -28,8 +28,8 @@ export async function GET() {
       FROM "Category" c
       LEFT JOIN "MenuItem" mi ON mi."categoryId" = c.id
       LEFT JOIN "FeaturedDish" fd ON fd."menuItemId" = mi.id
-      ORDER BY c.name ASC, mi.name ASC, fd."order" ASC
-    `;
+      ORDER BY c.name ASC, mi.name ASC, fd."order" ASC`
+    );
 
     // Transform flat result into nested structure
     const categoryMap = new Map();
@@ -117,6 +117,11 @@ export async function GET() {
       items: [],
       featuredDishes: [],
       error: error.message 
-    }, { status: 200 });
+    }, { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+      }
+    });
   }
 }

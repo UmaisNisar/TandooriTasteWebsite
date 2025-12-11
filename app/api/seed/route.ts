@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { contentBlockQueries, storeHoursQueries, reviewQueries, userQueries, categoryQueries, menuItemQueries, featuredDishQueries } from '@/lib/db-helpers';
+import { contentBlockQueries, storeHoursQueries, reviewQueries, userQueries, categoryQueries, menuItemQueries, featuredDishQueries, homeSliderQueries } from '@/lib/db-helpers';
 import bcrypt from 'bcryptjs';
 
 export const runtime = 'nodejs';
@@ -42,6 +42,7 @@ export async function GET() {
     categories: { created: 0, skipped: 0, errors: 0 },
     menuItems: { created: 0, skipped: 0, errors: 0 },
     featuredDishes: { created: 0, skipped: 0, errors: 0 },
+    homeSlider: { created: 0, skipped: 0, errors: 0 },
     adminUser: { created: false, error: null }
   };
 
@@ -314,14 +315,14 @@ export async function GET() {
         description: "Assorted vegetable fritters (onion, potato, spinach) deep-fried in chickpea batter.",
         price: 7.99,
         categorySlug: "appetizers",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1117862/pexels-photo-1117862.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Chicken Tikka",
         description: "Tender chicken pieces marinated in yogurt and spices, grilled to perfection.",
         price: 12.99,
         categorySlug: "appetizers",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       // Tandoori Specialties
       {
@@ -329,21 +330,21 @@ export async function GET() {
         description: "Half chicken marinated in yogurt, lemon, and aromatic spices, cooked in clay tandoor.",
         price: 16.99,
         categorySlug: "tandoori-specialties",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640771/pexels-photo-1640771.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Seekh Kebab",
         description: "Minced lamb mixed with herbs and spices, skewered and grilled in tandoor.",
         price: 14.99,
         categorySlug: "tandoori-specialties",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Tandoori Mixed Grill",
         description: "Assorted kebabs including chicken tikka, seekh kebab, and boti kebab.",
         price: 24.99,
         categorySlug: "tandoori-specialties",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640775/pexels-photo-1640775.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       // Curries & Gravies
       {
@@ -351,28 +352,28 @@ export async function GET() {
         description: "Creamy tomato-based curry with tender chicken pieces, mild and flavorful.",
         price: 18.99,
         categorySlug: "curries-gravies",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640776/pexels-photo-1640776.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Chicken Karahi",
         description: "Traditional Pakistani curry cooked in a wok with tomatoes, ginger, and green chilies.",
         price: 19.99,
         categorySlug: "curries-gravies",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640778/pexels-photo-1640778.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Lamb Curry",
         description: "Tender lamb pieces slow-cooked in rich, aromatic curry sauce with whole spices.",
         price: 21.99,
         categorySlug: "curries-gravies",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640779/pexels-photo-1640779.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Chana Masala",
         description: "Chickpeas cooked in tangy tomato gravy with onions, garlic, and aromatic spices.",
         price: 13.99,
         categorySlug: "curries-gravies",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640780/pexels-photo-1640780.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       // Biryani & Rice
       {
@@ -380,21 +381,21 @@ export async function GET() {
         description: "Fragrant basmati rice layered with spiced chicken, saffron, and fried onions.",
         price: 17.99,
         categorySlug: "biryani-rice",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640781/pexels-photo-1640781.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Lamb Biryani",
         description: "Aromatic basmati rice cooked with tender lamb, whole spices, and saffron.",
         price: 19.99,
         categorySlug: "biryani-rice",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640782/pexels-photo-1640782.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Vegetable Biryani",
         description: "Mixed vegetables cooked with basmati rice, saffron, and aromatic spices.",
         price: 15.99,
         categorySlug: "biryani-rice",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1640783/pexels-photo-1640783.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       // Bread & Naan
       {
@@ -402,21 +403,21 @@ export async function GET() {
         description: "Freshly baked soft bread from the tandoor, perfect for dipping in curries.",
         price: 3.99,
         categorySlug: "bread-naan",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1487515/pexels-photo-1487515.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Garlic Naan",
         description: "Naan brushed with garlic butter and fresh cilantro, baked in tandoor.",
         price: 4.99,
         categorySlug: "bread-naan",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/4109130/pexels-photo-4109130.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Butter Naan",
         description: "Soft naan brushed with butter, light and fluffy from the tandoor.",
         price: 4.49,
         categorySlug: "bread-naan",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/5371695/pexels-photo-5371695.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       // Desserts
       {
@@ -424,14 +425,14 @@ export async function GET() {
         description: "Sweet milk dumplings soaked in rose-scented sugar syrup, served warm.",
         price: 5.99,
         categorySlug: "desserts",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1117867/pexels-photo-1117867.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Kheer",
         description: "Creamy rice pudding flavored with cardamom, saffron, and topped with nuts.",
         price: 6.99,
         categorySlug: "desserts",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1117868/pexels-photo-1117868.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       // Beverages
       {
@@ -439,14 +440,14 @@ export async function GET() {
         description: "Sweet and creamy yogurt drink blended with fresh mango pulp.",
         price: 4.99,
         categorySlug: "beverages",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1117869/pexels-photo-1117869.jpeg?auto=compress&cs=tinysrgb&w=800"
       },
       {
         name: "Sweet Lassi",
         description: "Traditional yogurt drink sweetened with sugar and flavored with cardamom.",
         price: 3.99,
         categorySlug: "beverages",
-        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800"
+        imageUrl: "https://images.pexels.com/photos/1117870/pexels-photo-1117870.jpeg?auto=compress&cs=tinysrgb&w=800"
       }
     ];
 
@@ -526,6 +527,67 @@ export async function GET() {
       } catch (error: any) {
         console.error(`Error creating featured dish ${featured.name}:`, error.message);
         results.featuredDishes.errors++;
+      }
+    }
+    await delay(200);
+
+    // Seed Home Slider Images
+    const sliderImages = [
+      {
+        imageUrl: "https://images.pexels.com/photos/1117862/pexels-photo-1117862.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        caption: "Authentic Pakistani & Indian Cuisine",
+        altText: "Tandoori dishes and curries on a table",
+        order: 0,
+        isActive: true
+      },
+      {
+        imageUrl: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        caption: "Fire-kissed Tandoori Specialties",
+        altText: "Tandoori chicken and kebabs",
+        order: 1,
+        isActive: true
+      },
+      {
+        imageUrl: "https://images.pexels.com/photos/1117867/pexels-photo-1117867.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        caption: "Slow-Cooked Curries & Biryani",
+        altText: "Rich curries and biryani dishes",
+        order: 2,
+        isActive: true
+      },
+      {
+        imageUrl: "https://images.pexels.com/photos/1487515/pexels-photo-1487515.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        caption: "Fresh Naan from the Tandoor",
+        altText: "Freshly baked naan bread",
+        order: 3,
+        isActive: true
+      }
+    ];
+
+    console.log("🖼️  Seeding home slider images...");
+    for (const slide of sliderImages) {
+      try {
+        // Check if slide already exists by imageUrl
+        const existingSlides = await homeSliderQueries.findMany();
+        const existing = existingSlides.find((s: any) => s.imageUrl === slide.imageUrl);
+        
+        if (!existing) {
+          await homeSliderQueries.create({
+            imageUrl: slide.imageUrl,
+            caption: slide.caption,
+            altText: slide.altText,
+            order: slide.order,
+            isActive: slide.isActive
+          });
+          results.homeSlider.created++;
+          console.log(`✅ Created slider image: ${slide.caption}`);
+        } else {
+          results.homeSlider.skipped++;
+          console.log(`ℹ️  Slider image already exists: ${slide.caption}`);
+        }
+        await delay(100);
+      } catch (error: any) {
+        console.error(`Error creating slider image:`, error.message);
+        results.homeSlider.errors++;
       }
     }
     await delay(200);
