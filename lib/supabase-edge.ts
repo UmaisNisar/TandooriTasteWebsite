@@ -2,6 +2,36 @@
 // This uses @supabase/supabase-js which is fully compatible with Edge Runtime
 import { createClient } from '@supabase/supabase-js';
 
+// Type definitions for Supabase nested select responses
+type FeaturedDishRow = {
+  id: string;
+  menuItemId: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type MenuItemRow = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string | null;
+  categoryId: string;
+  createdAt: string;
+  updatedAt: string;
+  FeaturedDish?: FeaturedDishRow[];
+};
+
+type CategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+  updatedAt: string;
+  MenuItem?: MenuItemRow[];
+};
+
 // Get Supabase credentials from environment variables
 function getSupabaseConfig() {
   // Option 1: Direct Supabase credentials (preferred)
@@ -115,7 +145,7 @@ export async function queryEdge(text: string, params?: any[]): Promise<any> {
               FeaturedDish (*)
             )
           `)
-          .order('name', { ascending: true });
+          .order('name', { ascending: true }) as { data: CategoryRow[] | null; error: any };
         
         if (error) throw error;
         

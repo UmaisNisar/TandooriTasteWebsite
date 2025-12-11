@@ -3,6 +3,7 @@ import { contentBlockQueries, storeHoursQueries, reviewQueries, userQueries, cat
 import bcrypt from 'bcryptjs';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; // Prevent static generation
 
 // Helper to add small delay between operations
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
