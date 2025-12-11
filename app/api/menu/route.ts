@@ -1,35 +1,80 @@
 import { NextResponse } from "next/server";
-import { categoryQueries, menuItemQueries, query } from "@/lib/db-helpers";
+import { getSupabase } from "@/lib/supabase-edge";
 
-// Use Node.js runtime for Supabase compatibility
-export const runtime = 'nodejs';
+// Use Edge Runtime for maximum performance
+export const runtime = 'edge';
 export const revalidate = 30; // Cache for 30 seconds
 
 // Unified menu endpoint - returns all categories, items, and featured dishes in one query
 export async function GET() {
   try {
-    // Single optimized query that fetches everything at once
-    const result = await query(
-      `SELECT 
-        c.id as category_id,
-        c.name as category_name,
-        c.slug as category_slug,
-        c."createdAt" as category_createdAt,
-        c."updatedAt" as category_updatedAt,
-        mi.id as item_id,
-        mi.name as item_name,
-        mi.description as item_description,
-        mi.price as item_price,
-        mi."imageUrl" as item_imageUrl,
-        mi."createdAt" as item_createdAt,
-        mi."updatedAt" as item_updatedAt,
-        fd.id as featured_id,
-        fd."order" as featured_order
-      FROM "Category" c
-      LEFT JOIN "MenuItem" mi ON mi."categoryId" = c.id
-      LEFT JOIN "FeaturedDish" fd ON fd."menuItemId" = mi.id
-      ORDER BY c.name ASC, mi.name ASC, fd."order" ASC`
-    );
+    const supabase = getSupabase();
+    
+    // Fetch categories with menu items and featured dishes using Supabase's nested select
+    // Supabase uses PostgREST syntax: select='*, MenuItem(*, FeaturedDish(*))'
+    const { data: categoriesData, error } = await supabase
+      .from('Category')
+      .select(`
+        *,
+        MenuItem (
+          *,
+          FeaturedDish (*)
+        )
+      `)
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+
+    // Transform nested structure to flat structure for backward compatibility
+    const rows: any[] = [];
+    if (categoriesData) {
+      for (const category of categoriesData) {
+        if (category.MenuItem && Array.isArray(category.MenuItem)) {
+          for (const menuItem of category.MenuItem) {
+            const featuredDish = menuItem.FeaturedDish && Array.isArray(menuItem.FeaturedDish) 
+              ? menuItem.FeaturedDish[0] 
+              : null;
+            
+            rows.push({
+              category_id: category.id,
+              category_name: category.name,
+              category_slug: category.slug,
+              category_createdAt: category.createdAt,
+              category_updatedAt: category.updatedAt,
+              item_id: menuItem.id,
+              item_name: menuItem.name,
+              item_description: menuItem.description,
+              item_price: menuItem.price,
+              item_imageUrl: menuItem.imageUrl,
+              item_createdAt: menuItem.createdAt,
+              item_updatedAt: menuItem.updatedAt,
+              featured_id: featuredDish?.id || null,
+              featured_order: featuredDish?.order || null,
+            });
+          }
+        } else {
+          // Category with no menu items
+          rows.push({
+            category_id: category.id,
+            category_name: category.name,
+            category_slug: category.slug,
+            category_createdAt: category.createdAt,
+            category_updatedAt: category.updatedAt,
+            item_id: null,
+            item_name: null,
+            item_description: null,
+            item_price: null,
+            item_imageUrl: null,
+            item_createdAt: null,
+            item_updatedAt: null,
+            featured_id: null,
+            featured_order: null,
+          });
+        }
+      }
+    }
+
+    const result = { rows, rowCount: rows.length };
 
     // Transform flat result into nested structure
     const categoryMap = new Map();

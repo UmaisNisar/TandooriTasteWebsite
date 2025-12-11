@@ -35,7 +35,7 @@ const nextConfig = {
   },
   // Enable static optimization where possible
   experimental: {
-    optimizePackageImports: ['@vercel/postgres'],
+    optimizePackageImports: ['@supabase/supabase-js'],
   },
   webpack: (config, { isServer }) => {
     // Suppress pg-native warning (it's optional and not needed)

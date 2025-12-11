@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sql } from '@vercel/postgres';
+import { getSupabase } from '@/lib/supabase-edge';
 
 // Use Edge Runtime for maximum performance
 export const runtime = 'edge';
@@ -7,13 +7,16 @@ export const revalidate = 30; // Cache for 30 seconds
 
 export async function GET() {
   try {
-    const result = await sql`
-      SELECT * FROM "Review" 
-      WHERE "isVisible" = true
-      ORDER BY "createdAt" DESC
-    `;
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('Review')
+      .select('*')
+      .eq('isVisible', true)
+      .order('createdAt', { ascending: false });
 
-    return NextResponse.json(result.rows, {
+    if (error) throw error;
+
+    return NextResponse.json(data || [], {
       headers: {
         'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
       }

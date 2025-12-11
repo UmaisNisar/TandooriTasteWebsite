@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sql } from '@vercel/postgres';
+import { getSupabase } from '@/lib/supabase-edge';
 
 // Use Edge Runtime for maximum performance
 export const runtime = 'edge';
@@ -7,15 +7,27 @@ export const revalidate = 30; // Cache for 30 seconds
 
 export async function GET() {
   try {
+    const supabase = getSupabase();
+    
     // Fetch store hours and upcoming holidays in parallel
     const [hoursResult, holidaysResult] = await Promise.all([
-      sql`SELECT * FROM "StoreHours" ORDER BY "dayOfWeek" ASC`,
-      sql`SELECT * FROM "Holiday" WHERE date >= NOW() ORDER BY date ASC`
+      supabase
+        .from('StoreHours')
+        .select('*')
+        .order('dayOfWeek', { ascending: true }),
+      supabase
+        .from('Holiday')
+        .select('*')
+        .gte('date', new Date().toISOString())
+        .order('date', { ascending: true })
     ]);
 
+    if (hoursResult.error) throw hoursResult.error;
+    if (holidaysResult.error) throw holidaysResult.error;
+
     return NextResponse.json({
-      hours: hoursResult.rows,
-      holidays: holidaysResult.rows
+      hours: hoursResult.data || [],
+      holidays: holidaysResult.data || []
     }, {
       headers: {
         'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'

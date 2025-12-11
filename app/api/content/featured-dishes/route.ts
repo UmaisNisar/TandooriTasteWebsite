@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sql } from '@vercel/postgres';
+import { getSupabase } from '@/lib/supabase-edge';
 
 // Use Edge Runtime for maximum performance
 export const runtime = 'edge';
@@ -7,44 +7,43 @@ export const revalidate = 30; // Cache for 30 seconds
 
 export async function GET() {
   try {
-    // Fetch featured dishes with menu items in one query
-    const result = await sql`
-      SELECT 
-        fd.*,
-        mi.id as "menuItem_id",
-        mi.name as "menuItem_name",
-        mi.description as "menuItem_description",
-        mi.price as "menuItem_price",
-        mi."imageUrl" as "menuItem_imageUrl",
-        c.id as "menuItem_category_id",
-        c.name as "menuItem_category_name",
-        c.slug as "menuItem_category_slug"
-      FROM "FeaturedDish" fd
-      JOIN "MenuItem" mi ON fd."menuItemId" = mi.id
-      JOIN "Category" c ON mi."categoryId" = c.id
-      ORDER BY fd."order" ASC
-    `;
+    // Fetch featured dishes with menu items in one query using Supabase's nested select
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('FeaturedDish')
+      .select(`
+        *,
+        MenuItem (
+          *,
+          Category (
+            *
+          )
+        )
+      `)
+      .order('order', { ascending: true });
+
+    if (error) throw error;
 
     // Transform to nested structure
-    const featured = result.rows.map((row: any) => ({
+    const featured = (data || []).map((row: any) => ({
       id: row.id,
-      menuItemId: row.menuItem_id,
+      menuItemId: row.menuItemId,
       order: row.order,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-      menuItem: {
-        id: row.menuItem_id,
-        name: row.menuItem_name,
-        description: row.menuItem_description,
-        price: parseFloat(row.menuItem_price),
-        imageUrl: row.menuItem_imageUrl,
-        category: {
-          id: row.menuItem_category_id,
-          name: row.menuItem_category_name,
-          slug: row.menuItem_category_slug,
-        },
-      },
-    }));
+      menuItem: row.MenuItem ? {
+        id: row.MenuItem.id,
+        name: row.MenuItem.name,
+        description: row.MenuItem.description,
+        price: parseFloat(row.MenuItem.price),
+        imageUrl: row.MenuItem.imageUrl,
+        category: row.MenuItem.Category ? {
+          id: row.MenuItem.Category.id,
+          name: row.MenuItem.Category.name,
+          slug: row.MenuItem.Category.slug,
+        } : null,
+      } : null,
+    })).filter((f: any) => f.menuItem); // Filter out any with missing menu items
 
     return NextResponse.json(featured, {
       headers: {

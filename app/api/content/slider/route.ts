@@ -1,17 +1,34 @@
-import { homeSliderQueries } from "@/lib/db-helpers";
+import { getSupabase } from "@/lib/supabase-edge";
 import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+// Use Edge Runtime for maximum performance
+export const runtime = 'edge';
+export const revalidate = 30; // Cache for 30 seconds
 
 export async function GET() {
   try {
-    const slides = await homeSliderQueries.findMany();
-    const activeSlides = slides.filter((s: { isActive: boolean }) => s.isActive).sort((a: { order: number }, b: { order: number }) => a.order - b.order);
-    return NextResponse.json(activeSlides);
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('HomeSlider')
+      .select('*')
+      .eq('isActive', true)
+      .order('order', { ascending: true });
+
+    if (error) throw error;
+
+    return NextResponse.json(data || [], {
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+      }
+    });
   } catch (error) {
     console.error('Error fetching slider:', error);
-    return NextResponse.json([], { status: 200 });
+    return NextResponse.json([], { 
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+      }
+    });
   }
 }
 

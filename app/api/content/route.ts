@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sql } from '@vercel/postgres';
+import { getSupabase } from '@/lib/supabase-edge';
 
 // Use Edge Runtime for maximum performance
 export const runtime = 'edge';
@@ -10,22 +10,18 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const page = searchParams.get("page");
 
-    let result;
+    const supabase = getSupabase();
+    let query = supabase.from('ContentBlock').select('*').order('order', { ascending: true });
+
     if (page) {
-      // Use template literal for parameterized query
-      result = await sql`
-        SELECT * FROM "ContentBlock" 
-        WHERE page = ${page}
-        ORDER BY "order" ASC
-      `;
-    } else {
-      result = await sql`
-        SELECT * FROM "ContentBlock" 
-        ORDER BY "order" ASC
-      `;
+      query = query.eq('page', page);
     }
 
-    return NextResponse.json(result.rows, {
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return NextResponse.json(data || [], {
       headers: {
         'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
       }
