@@ -38,8 +38,9 @@ function AdminLoginForm() {
         setLoading(false);
       } else if (result?.ok) {
         console.log("[LOGIN] Sign in successful, redirecting...");
-        router.push(callbackUrl);
-        router.refresh();
+        // Use window.location for a hard redirect to ensure session is recognized
+        // This ensures the middleware sees the new session
+        window.location.href = callbackUrl;
       } else {
         console.log("[LOGIN] Unexpected result:", result);
         setError("Invalid email or password. Please try again.");
