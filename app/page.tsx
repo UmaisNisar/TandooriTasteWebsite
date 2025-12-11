@@ -19,11 +19,13 @@ export default async function HomePage() {
   try {
     [blocks, featured] = await Promise.all([
       contentBlockQueries.findMany({ page: "home" }),
-      featuredDishQueries.findMany()
+      featuredDishQueries.findMany(true) // Include menu items with category info
     ]);
   } catch (error) {
     console.error('Database error on homepage:', error);
     // Continue with empty arrays - page will still render
+    blocks = blocks || [];
+    featured = featured || [];
   }
 
   const heroBlock = blocks.find((b) => b.section === "hero");
@@ -39,13 +41,15 @@ export default async function HomePage() {
     };
   }
 
-  const featuredDishes = featured.map((f) => ({
-    name: f.menuItem.name,
-    description: f.menuItem.description,
-    price: `CAD ${f.menuItem.price.toFixed(2)}`,
-    imageUrl: f.menuItem.imageUrl || "",
-    badge: "Featured"
-  }));
+  const featuredDishes = featured
+    .filter((f) => f.menuItem) // Only include featured dishes with valid menu items
+    .map((f) => ({
+      name: f.menuItem.name,
+      description: f.menuItem.description,
+      price: `CAD ${f.menuItem.price.toFixed(2)}`,
+      imageUrl: f.menuItem.imageUrl || "",
+      badge: "Featured"
+    }));
 
   const whyChooseUsBlock = blocks.find((b) => b.section === "why-choose-us");
   const whyChooseUsData = whyChooseUsBlock
