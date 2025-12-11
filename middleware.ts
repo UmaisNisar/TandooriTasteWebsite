@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "./lib/auth";
 
 const ADMIN_PREFIXES = ["/admin", "/api/admin"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Never protect the login page via middleware to avoid redirect loops.
-  if (pathname.startsWith("/admin/login")) {
+  // ALWAYS allow login page to load - check this FIRST before anything else
+  if (pathname === "/admin/login" || pathname.startsWith("/admin/login")) {
     return NextResponse.next();
   }
 
@@ -23,18 +22,34 @@ export async function middleware(req: NextRequest) {
   // Check if NEXTAUTH_SECRET is set (basic validation)
   if (!process.env.NEXTAUTH_SECRET) {
     console.error("[MIDDLEWARE] NEXTAUTH_SECRET is not set");
-    // Allow login page to load, redirect others
-    if (pathname.startsWith("/admin/login")) {
-      return NextResponse.next();
-    }
+    // Redirect to login for admin routes (but login page itself is already handled above)
     const loginUrl = new URL("/admin/login", req.url);
     loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
     loginUrl.searchParams.set("error", "configuration");
     return NextResponse.redirect(loginUrl);
   }
 
+  // Dynamically import auth to avoid Edge Runtime issues
+  // Wrap in try-catch to handle any import or execution errors
   try {
-    const session = await auth();
+    const authModule = await import("./lib/auth").catch((importError) => {
+      console.error("[MIDDLEWARE] Failed to import auth module:", importError);
+      return null;
+    });
+
+    if (!authModule || !authModule.auth) {
+      console.error("[MIDDLEWARE] Auth module not available");
+      // Allow login page, redirect other admin routes
+      const loginUrl = new URL("/admin/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
+      loginUrl.searchParams.set("error", "configuration");
+      return NextResponse.redirect(loginUrl);
+    }
+
+    const session = await authModule.auth().catch((authError) => {
+      console.error("[MIDDLEWARE] Auth function error:", authError);
+      return null;
+    });
     
     // Check if user is authenticated
     if (!session?.user) {
@@ -53,17 +68,12 @@ export async function middleware(req: NextRequest) {
 
     return NextResponse.next();
   } catch (error) {
-    // If auth fails (e.g., NEXTAUTH_SECRET not set), allow access to login page
-    // but redirect other admin routes to login
-    console.error("[MIDDLEWARE] Auth error:", error);
+    // If anything fails, allow access to login page but redirect other admin routes to login
+    console.error("[MIDDLEWARE] Unexpected error:", error);
     console.error("[MIDDLEWARE] Error details:", error instanceof Error ? error.message : String(error));
+    console.error("[MIDDLEWARE] Error stack:", error instanceof Error ? error.stack : "No stack");
     
-    // If we're already on login page, allow it
-    if (pathname.startsWith("/admin/login")) {
-      return NextResponse.next();
-    }
-    
-    // For other admin routes, redirect to login
+    // For admin routes (except login), redirect to login
     const loginUrl = new URL("/admin/login", req.url);
     loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
     loginUrl.searchParams.set("error", "configuration");
