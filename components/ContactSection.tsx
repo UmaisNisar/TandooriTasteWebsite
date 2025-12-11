@@ -1,4 +1,4 @@
-import { contentBlockQueries, storeHoursQueries } from "@/lib/db-helpers";
+import { fetchContentBlocks, fetchStoreHours } from "@/lib/content-helpers";
 import DeliveryLinks from "./DeliveryLinks";
 
 export default async function ContactSection() {
@@ -7,8 +7,8 @@ export default async function ContactSection() {
   
   try {
     [blocks, storeData] = await Promise.all([
-      contentBlockQueries.findMany({ page: "contact" }),
-      storeHoursQueries.findMany()
+      fetchContentBlocks("contact"),
+      fetchStoreHours()
     ]);
   } catch (error) {
     console.error('Database error on contact page:', error);

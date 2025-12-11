@@ -19,6 +19,37 @@ export type Review = {
   createdAt: string;
 };
 
+export type ContentBlock = {
+  id: string;
+  page: string;
+  section: string;
+  content: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StoreHours = {
+  id: string;
+  dayOfWeek: number;
+  openTime: string | null;
+  closeTime: string | null;
+  isClosed: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Holiday = {
+  id: string;
+  title: string;
+  date: string;
+  isClosed: boolean;
+  overrideOpenTime: string | null;
+  overrideCloseTime: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 // Fetch slider data
 export async function fetchSliderData(): Promise<Slide[]> {
   try {
@@ -53,6 +84,84 @@ export async function fetchReviewsData(): Promise<Review[]> {
     return (data || []) as Review[];
   } catch (error: any) {
     console.error('Error fetching reviews:', error);
+    return [];
+  }
+}
+
+// Fetch content blocks
+export async function fetchContentBlocks(page?: string): Promise<ContentBlock[]> {
+  try {
+    const supabase = getSupabase();
+    let query = supabase.from('ContentBlock').select('*').order('order', { ascending: true });
+
+    if (page) {
+      query = query.eq('page', page);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return (data || []) as ContentBlock[];
+  } catch (error: any) {
+    console.error('Error fetching content blocks:', error);
+    return [];
+  }
+}
+
+// Fetch store hours
+export async function fetchStoreHours(): Promise<StoreHours[]> {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('StoreHours')
+      .select('*')
+      .order('dayOfWeek', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []) as StoreHours[];
+  } catch (error: any) {
+    console.error('Error fetching store hours:', error);
+    return [];
+  }
+}
+
+// Fetch store hours by day of week
+export async function fetchStoreHoursByDay(dayOfWeek: number): Promise<StoreHours | null> {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('StoreHours')
+      .select('*')
+      .eq('dayOfWeek', dayOfWeek)
+      .single();
+
+    if (error) throw error;
+
+    return data as StoreHours | null;
+  } catch (error: any) {
+    console.error('Error fetching store hours by day:', error);
+    return null;
+  }
+}
+
+// Fetch holidays for a date range
+export async function fetchHolidays(startDate: Date, endDate: Date): Promise<Holiday[]> {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('Holiday')
+      .select('*')
+      .gte('date', startDate.toISOString())
+      .lte('date', endDate.toISOString())
+      .order('date', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []) as Holiday[];
+  } catch (error: any) {
+    console.error('Error fetching holidays:', error);
     return [];
   }
 }

@@ -1,4 +1,4 @@
-import { holidayQueries, storeHoursQueries } from "@/lib/db-helpers";
+import { fetchHolidays, fetchStoreHoursByDay } from "@/lib/content-helpers";
 
 export default async function StoreStatus() {
   try {
@@ -7,12 +7,8 @@ export default async function StoreStatus() {
     const dayOfWeek = now.getDay();
 
     // Check for holidays
-    const holiday = await holidayQueries.findFirst({
-      dateRange: {
-        start: today,
-        end: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-      }
-    });
+    const holidays = await fetchHolidays(today, new Date(today.getTime() + 24 * 60 * 60 * 1000));
+    const holiday = holidays.length > 0 ? holidays[0] : null;
 
     if (holiday) {
       if (holiday.isClosed) {
@@ -52,7 +48,7 @@ export default async function StoreStatus() {
     }
 
     // Get regular hours
-    const hours = await storeHoursQueries.findUnique({ dayOfWeek });
+    const hours = await fetchStoreHoursByDay(dayOfWeek);
 
     if (!hours || hours.isClosed || !hours.openTime || !hours.closeTime) {
       return (

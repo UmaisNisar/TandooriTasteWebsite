@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
-import { contentBlockQueries } from "@/lib/db-helpers";
+import { fetchContentBlocks } from "@/lib/content-helpers";
 
 export const metadata: Metadata = {
   title: "About Us | Tandoori Tastes · Pakistani Heart in Sudbury",
@@ -16,7 +16,7 @@ export default async function AboutPage() {
   let blocks: any[] = [];
   
   try {
-    blocks = await contentBlockQueries.findMany({ page: "about" });
+    blocks = await fetchContentBlocks("about");
   } catch (error) {
     console.error('Database error on about page:', error);
     // Continue with empty array - page will still render

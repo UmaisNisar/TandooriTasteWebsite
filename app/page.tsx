@@ -1,5 +1,5 @@
-import { contentBlockQueries, featuredDishQueries } from "@/lib/db-helpers";
-import { fetchSliderData, fetchReviewsData } from "@/lib/content-helpers";
+import { featuredDishQueries } from "@/lib/db-helpers";
+import { fetchSliderData, fetchReviewsData, fetchContentBlocks } from "@/lib/content-helpers";
 import Image from "next/image";
 import Link from "next/link";
 import BestSellers from "@/components/BestSellers";
@@ -20,7 +20,7 @@ export default async function HomePage() {
   
   try {
     [blocks, featured, slides, reviews] = await Promise.all([
-      contentBlockQueries.findMany({ page: "home" }),
+      fetchContentBlocks("home"),
       featuredDishQueries.findMany(true), // Include menu items with category info
       fetchSliderData(),
       fetchReviewsData()
