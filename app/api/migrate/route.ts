@@ -43,6 +43,44 @@ export async function GET() {
     
     console.log(`[MIGRATE] Migration complete: ${successCount} succeeded, ${failCount} failed`);
     
+    // Check if all migrations failed (likely a connection issue)
+    const allFailed = failCount > 0 && successCount === 0;
+    const hasConnectionError = results.some(r => 
+      !r.success && (
+        r.error?.includes('getaddrinfo') || 
+        r.error?.includes('ENOTFOUND') ||
+        r.error?.includes('DATABASE_URL')
+      )
+    );
+    
+    // If all failed or there are connection errors, return failure
+    if (allFailed || hasConnectionError) {
+      return NextResponse.json({
+        success: false,
+        message: allFailed 
+          ? 'All database migrations failed. This is likely a connection issue.'
+          : 'Some migrations failed due to connection errors.',
+        executed: successCount,
+        failed: failCount,
+        results,
+        hint: hasConnectionError
+          ? 'Database connection failed. DATABASE_URL may not be set in Vercel environment variables, or the connection string is incorrect. Go to Vercel Dashboard → Settings → Environment Variables → Add DATABASE_URL with your Supabase connection string, then redeploy. Try using Supabase connection pooler (port 6543) instead of direct connection (port 5432).'
+          : 'Check the error messages in the results for details.',
+        checkConfig: '/api/check-db-config',
+      }, { status: 500 });
+    }
+    
+    // If some failed but not all, still return success but with warning
+    if (failCount > 0) {
+      return NextResponse.json({
+        success: true,
+        message: `Database migrations completed with ${failCount} failure(s). Some migrations may have failed due to "already exists" errors, which are safe to ignore.`,
+        executed: successCount,
+        failed: failCount,
+        results
+      });
+    }
+    
     return NextResponse.json({
       success: true,
       message: 'Database migrations completed successfully!',

@@ -119,3 +119,4 @@ This format is **correct**. The issue is likely that it's not set in Vercel envi
 - [ ] Supabase project is active
 - [ ] Connection string format is correct (starts with `postgresql://`)
 
+
