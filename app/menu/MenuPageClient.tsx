@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import MenuTabs, { MenuCategoryTab } from "@/components/MenuTabs";
 import DishCard from "@/components/DishCard";
@@ -14,29 +14,29 @@ type MenuItemDto = {
   category: { id: string; name: string };
 };
 
-export default function MenuPageClient() {
-  const [categories, setCategories] = useState<MenuCategoryTab[]>([]);
-  const [items, setItems] = useState<MenuItemDto[]>([]);
+type MenuPageClientProps = {
+  initialCategories: Array<{ id: string; name: string; slug: string }>;
+  initialItems: Array<{
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    imageUrl: string | null;
+    category: { id: string; name: string; slug: string };
+  }>;
+};
+
+export default function MenuPageClient({ initialCategories, initialItems }: MenuPageClientProps) {
+  const [categories] = useState<MenuCategoryTab[]>(
+    initialCategories.map((c) => ({
+      id: c.id,
+      name: c.name
+    }))
+  );
+  const [items] = useState<MenuItemDto[]>(initialItems as MenuItemDto[]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | "all">(
     "all"
   );
-
-  useEffect(() => {
-    async function loadMenu() {
-      const res = await fetch("/api/menu");
-      if (!res.ok) return;
-      const data = await res.json();
-      setCategories(
-        (data.categories as { id: string; name: string }[]).map((c) => ({
-          id: c.id,
-          name: c.name
-        }))
-      );
-      setItems(data.items as MenuItemDto[]);
-    }
-
-    void loadMenu();
-  }, []);
 
   const filtered =
     selectedCategoryId === "all"
