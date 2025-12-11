@@ -57,9 +57,6 @@ function getSupabaseClient() {
       auth: {
         persistSession: false, // Edge Runtime doesn't support session persistence
       },
-      db: {
-        schema: 'public',
-      },
     });
   }
   return supabaseClient;
