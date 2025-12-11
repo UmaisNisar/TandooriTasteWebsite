@@ -58,13 +58,6 @@ export async function GET() {
 
   try {
     console.log("🌱 Seeding database...");
-    
-    // Set a timeout for the entire operation (25 seconds for Vercel's 30s limit)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Seeding operation timed out after 25 seconds')), 25000);
-    });
-    
-    const seedPromise = (async () => {
 
     // Seed Homepage Content
     const homeBlocks = [
@@ -629,25 +622,19 @@ export async function GET() {
       console.log("✅ Seeding completed!");
       console.log("📊 Results:", JSON.stringify(results, null, 2));
       
-      return { 
+      console.log("✅ Seeding completed!");
+      console.log("📊 Results:", JSON.stringify(results, null, 2));
+      
+      return NextResponse.json({ 
         success: true, 
         message: 'Database seeded successfully! Admin user: admin / admin123',
         results: results
-      };
+      });
     } catch (error: any) {
       console.error('Error creating admin user:', error.message);
       results.adminUser.error = error.message;
       throw error;
     }
-    };
-    
-    // Race between seeding and timeout
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Seeding operation timed out after 25 seconds. The operation may still be running in the background.')), 25000);
-    });
-    
-    const response = await Promise.race([seedOperation(), timeoutPromise]) as any;
-    return NextResponse.json(response);
     
   } catch (error: any) {
     console.error('Seeding error:', error);
