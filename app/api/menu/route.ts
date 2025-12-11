@@ -5,6 +5,36 @@ import { getSupabase } from "@/lib/supabase-edge";
 export const runtime = 'edge';
 export const revalidate = 30; // Cache for 30 seconds
 
+// Type definitions for Supabase nested select response
+type FeaturedDish = {
+  id: string;
+  menuItemId: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type MenuItem = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string | null;
+  categoryId: string;
+  createdAt: string;
+  updatedAt: string;
+  FeaturedDish?: FeaturedDish[];
+};
+
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+  updatedAt: string;
+  MenuItem?: MenuItem[];
+};
+
 // Unified menu endpoint - returns all categories, items, and featured dishes in one query
 export async function GET() {
   try {
@@ -21,7 +51,7 @@ export async function GET() {
           FeaturedDish (*)
         )
       `)
-      .order('name', { ascending: true });
+      .order('name', { ascending: true }) as { data: Category[] | null; error: any };
 
     if (error) throw error;
 
