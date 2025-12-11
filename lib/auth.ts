@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { userQueries } from "./db-helpers";
+import { findUserByEmail } from "./user-helpers";
 import bcrypt from "bcryptjs";
 
 export const { handlers, auth } = NextAuth({
@@ -26,7 +26,7 @@ export const { handlers, auth } = NextAuth({
           
           let user;
           try {
-            user = await userQueries.findUnique({ email });
+            user = await findUserByEmail(email);
             console.log("[AUTH] User found:", user ? { id: user.id, email: user.email, role: user.role } : "null");
           } catch (dbError) {
             console.error("[AUTH] Database error:", dbError);
