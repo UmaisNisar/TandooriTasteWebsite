@@ -16,24 +16,53 @@ export async function GET() {
     const schemaSQL = readFileSync(schemaPath, 'utf-8');
     
     // Split by semicolons and execute each statement
-    const statements = schemaSQL
+    // Remove comments first, then split
+    const cleanedSQL = schemaSQL
+      .split('\n')
+      .filter(line => !line.trim().startsWith('--'))
+      .join('\n');
+    
+    const statements = cleanedSQL
       .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+      .filter(s => s.length > 0);
     
     console.log(`[MIGRATE] Executing ${statements.length} SQL statements...`);
     
     const results = [];
-    for (const statement of statements) {
+    for (let i = 0; i < statements.length; i++) {
+      const statement = statements[i];
+      const statementPreview = statement.length > 100 
+        ? statement.substring(0, 100) + '...' 
+        : statement;
+      
       try {
         await query(statement);
-        results.push({ statement: statement.substring(0, 50) + '...', success: true });
+        results.push({ 
+          index: i + 1,
+          statement: statementPreview, 
+          fullStatement: statement,
+          success: true 
+        });
       } catch (err: any) {
         // Ignore "already exists" errors
         if (err.message?.includes('already exists') || err.code === '42P07') {
-          results.push({ statement: statement.substring(0, 50) + '...', success: true, note: 'already exists' });
+          results.push({ 
+            index: i + 1,
+            statement: statementPreview, 
+            fullStatement: statement,
+            success: true, 
+            note: 'already exists' 
+          });
         } else {
-          results.push({ statement: statement.substring(0, 50) + '...', success: false, error: err.message });
+          results.push({ 
+            index: i + 1,
+            statement: statementPreview, 
+            fullStatement: statement,
+            success: false, 
+            error: err.message,
+            errorCode: err.code 
+          });
         }
       }
     }
@@ -53,6 +82,11 @@ export async function GET() {
       )
     );
     
+    // Check for "relation does not exist" errors - this means tables weren't created
+    const hasMissingTableError = results.some(r => 
+      !r.success && r.error?.includes('does not exist')
+    );
+    
     // If all failed or there are connection errors, return failure
     if (allFailed || hasConnectionError) {
       return NextResponse.json({
@@ -66,6 +100,26 @@ export async function GET() {
         hint: hasConnectionError
           ? 'Database connection failed. DATABASE_URL may not be set in Vercel environment variables, or the connection string is incorrect. Go to Vercel Dashboard → Settings → Environment Variables → Add DATABASE_URL with your Supabase connection string, then redeploy. Try using Supabase connection pooler (port 6543) instead of direct connection (port 5432).'
           : 'Check the error messages in the results for details.',
+        checkConfig: '/api/check-db-config',
+      }, { status: 500 });
+    }
+    
+    // If we have missing table errors, it means table creation failed
+    if (hasMissingTableError) {
+      const failedStatements = results.filter(r => !r.success);
+      const tableCreationFailed = results
+        .filter(r => r.fullStatement?.toUpperCase().includes('CREATE TABLE'))
+        .some(r => !r.success);
+      
+      return NextResponse.json({
+        success: false,
+        message: 'Table creation failed. Some tables do not exist, causing index creation to fail.',
+        executed: successCount,
+        failed: failCount,
+        results,
+        hint: tableCreationFailed
+          ? 'Table creation statements failed. Check the full error messages in the results. This might be a SQL syntax error or permission issue.'
+          : 'Indexes are being created on tables that do not exist. This means the table creation statements failed earlier. Check the results for table creation errors.',
         checkConfig: '/api/check-db-config',
       }, { status: 500 });
     }
