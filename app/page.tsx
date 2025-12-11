@@ -8,9 +8,8 @@ import CTASection from "@/components/CTASection";
 import StoreStatus from "@/components/StoreStatus";
 import HomeSlider from "@/components/HomeSlider";
 
-// Force dynamic rendering to avoid build-time database access
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Use ISR for better performance - revalidate every 30 seconds
+export const revalidate = 30;
 
 export default async function HomePage() {
   let blocks: any[] = [];

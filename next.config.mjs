@@ -5,8 +5,37 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "**"
+      },
+      // Supabase CDN domains
+      {
+        protocol: "https",
+        hostname: "*.supabase.co"
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.in"
+      },
+      {
+        protocol: "https",
+        hostname: "supabase.com"
+      },
+      // Common image CDNs
+      {
+        protocol: "https",
+        hostname: "images.pexels.com"
+      },
+      {
+        protocol: "https",
+        hostname: "unsplash.com"
       }
-    ]
+    ],
+    // Optimize images for performance
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+  },
+  // Enable static optimization where possible
+  experimental: {
+    optimizePackageImports: ['@vercel/postgres'],
   },
   webpack: (config, { isServer }) => {
     // Suppress pg-native warning (it's optional and not needed)

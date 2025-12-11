@@ -9,9 +9,8 @@ export const metadata: Metadata = {
     "Discover the story of Tandoori Tastes in Sudbury: our Pakistani roots, chef, and philosophy behind every tandoori, curry and biryani we serve."
 };
 
-// Force dynamic rendering to avoid build-time database access
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Use ISR for better performance - revalidate every 30 seconds
+export const revalidate = 30;
 
 export default async function AboutPage() {
   let blocks: any[] = [];

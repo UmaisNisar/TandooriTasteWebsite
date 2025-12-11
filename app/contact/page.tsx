@@ -8,9 +8,8 @@ export const metadata: Metadata = {
     "Contact Tandoori Tastes in Sudbury, Ontario. View our address, hours, phone, email, map and send a message for reservations or catering."
 };
 
-// Force dynamic rendering to avoid build-time database access
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Use ISR for better performance - revalidate every 30 seconds
+export const revalidate = 30;
 
 export default function ContactPage() {
   return (
